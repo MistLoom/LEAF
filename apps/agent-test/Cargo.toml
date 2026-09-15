@@ -1,0 +1,58 @@
+[package]
+name = "apps-agent-test"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Agent Test 应用：agent 会话、WebUI 与回合循环"
+default-run = "agent-test"
+
+[[bin]]
+name = "agent-test"
+path = "src/main.rs"
+
+[features]
+default = [
+    "ability-read-file",
+    "ability-write-file",
+    "ability-todo-write",
+    "ability-bash",
+    "ability-dispatch",
+    "ability-chat",
+    "ability-turn",
+    "ability-session",
+    "ability-prompt",
+    "ability-skill",
+]
+
+ability-read-file = ["frame-compose/ability-read-file"]
+ability-write-file = ["frame-compose/ability-write-file"]
+ability-todo-write = ["frame-compose/ability-todo-write"]
+ability-bash = ["frame-compose/ability-bash"]
+ability-dispatch = ["frame-compose/ability-dispatch"]
+ability-chat = ["frame-compose/ability-chat"]
+ability-turn = ["frame-compose/ability-turn"]
+ability-session = ["frame-compose/ability-session"]
+ability-prompt = ["frame-compose/ability-prompt"]
+ability-skill = ["frame-compose/ability-skill"]
+
+[dependencies]
+async-trait = { workspace = true }
+clap = { workspace = true }
+frame-compose = { workspace = true }
+frame-core = { workspace = true }
+ability-core = { workspace = true }
+ability-support = { workspace = true }
+axum = { workspace = true }
+futures-util = "0.3"
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { workspace = true, features = ["cors"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"

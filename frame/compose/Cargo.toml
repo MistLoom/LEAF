@@ -1,0 +1,92 @@
+[package]
+name = "frame-compose"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "组合根：Catalog、Bootstrap、Expose、Mgmt API"
+
+[lib]
+name = "frame_compose"
+path = "src/lib.rs"
+
+[features]
+default = [
+    "ability-config",
+    "ability-store",
+    "ability-store-persist",
+    "ability-store-temp",
+    "ability-markdown",
+    "ability-echo",
+    "ability-shout",
+    "ability-counter",
+    "ability-read-file",
+    "ability-write-file",
+    "ability-bash",
+    "ability-todo-write",
+    "ability-task",
+]
+ability-config = ["dep:ability-config"]
+ability-store = ["dep:ability-store"]
+ability-store-persist = ["dep:ability-store-persist"]
+ability-store-temp = ["dep:ability-store-temp"]
+ability-markdown = ["dep:ability-markdown"]
+ability-echo = ["dep:ability-echo"]
+ability-shout = ["dep:ability-shout"]
+ability-counter = ["dep:ability-counter"]
+ability-read-file = ["dep:ability-read-file"]
+ability-write-file = ["dep:ability-write-file"]
+ability-bash = ["dep:ability-bash"]
+ability-todo-write = ["dep:ability-todo-write"]
+ability-task = ["dep:ability-task"]
+ability-kb = ["dep:ability-kb"]
+ability-dispatch = ["dep:ai-dispatch"]
+ability-chat = ["dep:ai-chat"]
+ability-turn = ["dep:ai-turn"]
+ability-skill = ["dep:ai-skill"]
+ability-prompt = ["dep:ai-prompt", "ability-skill"]
+ability-session = ["dep:ai-session"]
+mgmt = ["dep:axum", "dep:async-stream", "dep:futures-core", "dep:tower-http"]
+port-fun = ["dep:frame-port-fun"]
+
+[dependencies]
+ability-core = { workspace = true }
+ability-support = { workspace = true }
+frame-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+ability-config = { workspace = true, optional = true }
+ability-store = { workspace = true, optional = true }
+ability-store-persist = { workspace = true, optional = true }
+ability-store-temp = { workspace = true, optional = true }
+ability-markdown = { workspace = true, optional = true }
+ability-echo = { workspace = true, optional = true }
+ability-shout = { workspace = true, optional = true }
+ability-counter = { workspace = true, optional = true }
+ability-read-file = { workspace = true, optional = true }
+ability-write-file = { workspace = true, optional = true }
+ability-bash = { workspace = true, optional = true }
+ability-todo-write = { workspace = true, optional = true }
+ability-task = { workspace = true, optional = true }
+ability-kb = { workspace = true, optional = true }
+ai-dispatch = { workspace = true, optional = true }
+ai-chat = { workspace = true, optional = true }
+ai-turn = { workspace = true, optional = true }
+ai-skill = { workspace = true, optional = true }
+ai-prompt = { workspace = true, optional = true }
+ai-session = { workspace = true, optional = true }
+frame-port-fun = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+async-stream = { version = "0.3", optional = true }
+futures-core = { version = "0.3", optional = true }
+tower-http = { workspace = true, optional = true }
+
+[build-dependencies]
+serde_yaml = { workspace = true }
+
+[dev-dependencies]
+ability-probe = { path = "../../external/ability-probe" }

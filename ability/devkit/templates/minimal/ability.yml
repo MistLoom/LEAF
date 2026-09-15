@@ -1,0 +1,9 @@
+framework_version: "1"
+id: {{id}}
+depends: []
+stateful: false
+methods:
+  - id: run
+    description: 占位实现
+    input:
+      type: object

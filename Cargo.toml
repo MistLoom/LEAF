@@ -1,0 +1,111 @@
+[workspace]
+resolver = "2"
+members = [
+    "frame/support/macros",
+    "frame/support",
+    "frame/protocol",
+    "ability/config",
+    "ability/store",
+    "ability/store_persist",
+    "ability/store_temp",
+    "ability/markdown",
+    "ability/read_file",
+    "ability/write_file",
+    "ability/bash",
+    "ability/todo_write",
+    "ability/echo",
+    "ability/counter",
+    "ability/shout",
+    "ability/kb",
+    "ability/task",
+    "ability/skill",
+    "ability/prompt",
+    "ability/dispatch",
+    "ability/chat",
+    "ability/turn",
+    "ability/session",
+    "ability/test_feedback",
+    "ability/devkit",
+    "ability/codegen_fixture",
+    "frame/core",
+    "frame/port-cli",
+    "frame/port-http",
+    "frame/port-mcp",
+    "frame/port-fun",
+    "frame/port-grpc",
+    "frame/compose",
+    "apps/ability-core",
+    "apps/runtime",
+    "apps/admin",
+    "apps/agent-test",
+]
+default-members = ["apps/runtime"]
+
+exclude = ["external/showcase", "external/ability-probe", "external/ability-sdk", "external/ability-sdk-codegen"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+
+[workspace.dependencies]
+ability-support = { path = "frame/support" }
+ability-support-macros = { path = "frame/support/macros" }
+frame-core = { path = "frame/core" }
+frame-compose = { path = "frame/compose" }
+ability-core = { path = "apps/ability-core" }
+frame-port-cli = { path = "frame/port-cli" }
+frame-port-http = { path = "frame/port-http" }
+frame-port-mcp = { path = "frame/port-mcp" }
+frame-port-fun = { path = "frame/port-fun" }
+frame-port-grpc = { path = "frame/port-grpc" }
+ability-sdk-codegen = { path = "external/ability-sdk-codegen" }
+ability-config = { path = "ability/config" }
+ability-store = { path = "ability/store" }
+ability-store-persist = { path = "ability/store_persist" }
+ability-store-temp = { path = "ability/store_temp" }
+ability-markdown = { path = "ability/markdown" }
+ability-read-file = { path = "ability/read_file" }
+ability-write-file = { path = "ability/write_file" }
+ability-bash = { path = "ability/bash" }
+ability-todo-write = { path = "ability/todo_write" }
+ability-echo = { path = "ability/echo" }
+ability-counter = { path = "ability/counter" }
+ability-shout = { path = "ability/shout" }
+ability-kb = { path = "ability/kb" }
+ability-task = { path = "ability/task" }
+ability-devkit = { path = "ability/devkit" }
+ability-codegen-fixture = { path = "ability/codegen_fixture" }
+ai-protocol = { path = "frame/protocol" }
+ai-skill = { path = "ability/skill" }
+ai-prompt = { path = "ability/prompt" }
+ai-dispatch = { path = "ability/dispatch" }
+ai-chat = { path = "ability/chat" }
+ai-turn = { path = "ability/turn" }
+ai-session = { path = "ability/session" }
+sha2 = "0.10"
+encoding_rs = "0.8"
+
+async-trait = "0.1"
+axum = "0.8"
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+rmcp = { version = "3.1", default-features = false, features = ["server", "transport-io"] }
+schemars = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "io-std", "io-util", "net", "signal", "process", "time"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[profile.release]
+lto = true
+codegen-units = 1

@@ -1,0 +1,65 @@
+# leafEX
+
+Ability 运行时：同一套能力经 CLI / MCP / HTTP / Fun 调用。引擎在 `apps/ability-core`，组合根在 `frame/compose`，能力契约在 `frame/support`。
+
+```bash
+cargo run -p apps-runtime -- catalog list
+cargo run -p admin -- --config config/tool_expose.example.yaml
+cargo run -p apps-runtime -- --config config/tool_expose.example.yaml catalog list
+cargo run -p apps-runtime -- --config config/tool_expose.example.yaml invoke read_file --args "{\"path\":\"README.md\"}"
+
+cargo run -p apps-agent-test -- run -p "解释 README.md 的结构"
+
+# WebUI（默认 http://127.0.0.1:8787/）
+cargo run -p apps-agent-test -- serve
+cargo run --release -p apps-agent-test
+
+cargo run -p apps-runtime --bin tool-bin -- build
+cd external/showcase && cargo run
+```
+
+## 能力开发
+
+```
+ability/<name>/
+  ability.yml          # framework_version + id / protocols / depends / methods / events
+  build.rs             # ability_sdk_codegen::generate_default()
+  src/
+    logic/             # 业务实现（codegen 仅 scaffold 缺失文件）
+    generated/         # codegen 产出（可覆盖）
+  cli|mcp|tools|grpc|skill/info.yml   # 协议投影（须与 protocols 一致）
+```
+
+- **Handler 能力**（默认）：每个 method 对应 `src/logic/<method>.rs`，`lib.rs` 导出 `generated::provider::provider`
+- **Factory 能力**（`factory: true`）：自定义 `Ability` + `into_factory`，manifest 由 codegen 生成
+- **脚手架**：`ability/devkit` 模板；codegen 测试见 `ability/codegen_fixture/tests/`
+
+```bash
+cargo build -p ability-echo          # build 触发 codegen
+cargo test -p ability-codegen-fixture
+./scripts/validate-declarations.sh   # 全仓库 ability.yml 声明校验
+```
+
+## 文档
+
+- 架构：[docs/architecture.md](docs/architecture.md)
+- App 层：[docs/apps.md](docs/apps.md)
+- Ability 规范：[docs/ability.md](docs/ability.md)
+- 入口裁剪：[docs/capability-expose.md](docs/capability-expose.md)
+- Agent Test 应用：[docs/agent_test/spec.md](docs/agent_test/spec.md)
+
+## 结构
+
+```
+ability/                      内置 Ability（22 个 crate，均已声明 + codegen）
+  devkit/                     脚手架 / validate / gen
+  codegen_fixture/            codegen 全功能测试
+frame/                        support、core、compose、port-*
+apps/ability-core             运行引擎
+apps/runtime                  参考运行时
+apps/admin                    参考管理面（可选）
+external/ability-sdk          独立作者 SDK
+external/ability-sdk-codegen  build 时代码生成（workspace exclude）
+external/                     外部工程（ability-probe、showcase）
+config/                       入口裁剪示例
+```

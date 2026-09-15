@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>leafEX Agent</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <header class="sidebar-head">
+        <h1>leafEX Agent</h1>
+        <button id="btn-new" type="button">新会话</button>
+      </header>
+      <ul id="session-list" class="session-list"></ul>
+      <footer class="sidebar-foot">
+        <span id="status">就绪</span>
+      </footer>
+    </aside>
+    <main class="main">
+      <div id="events" class="events"></div>
+      <div id="messages" class="messages"></div>
+      <form id="composer" class="composer">
+        <textarea id="prompt" rows="3" placeholder="输入任务… Enter 发送，Shift+Enter 换行"></textarea>
+        <div class="composer-actions">
+          <button id="btn-spawn" type="button" title="子代理">子代理</button>
+          <button id="btn-compact" type="button" title="压缩上下文">压缩</button>
+          <button id="btn-send" type="submit">发送</button>
+        </div>
+      </form>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

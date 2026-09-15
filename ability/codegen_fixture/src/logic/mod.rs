@@ -1,0 +1,4 @@
+//! 业务能力逻辑。勿写入声明或协议相关代码。
+
+pub mod ping;
+pub mod run;

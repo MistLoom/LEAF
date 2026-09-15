@@ -1,0 +1,29 @@
+[package]
+name = "ability-codegen-fixture"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "codegen 全功能测试用能力"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "codegen_fixture"
+path = "src/bin/codegen_fixture.rs"
+
+[dependencies]
+async-trait.workspace = true
+ability-support.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+clap = { workspace = true }
+tokio = { workspace = true }
+
+[build-dependencies]
+ability-sdk-codegen = { workspace = true }
+
+[dev-dependencies]
+ability-sdk-codegen = { workspace = true }
+tempfile = "3"

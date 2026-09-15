@@ -1,0 +1,22 @@
+[package]
+name = "ability-test-feedback"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "测试用 Ability test.feedback：反馈层场景"
+
+[dependencies]
+async-trait.workspace = true
+ability-support.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[build-dependencies]
+ability-sdk-codegen = { workspace = true }
+
+[dev-dependencies]
+ability-core.workspace = true
+frame-core.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

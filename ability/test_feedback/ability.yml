@@ -1,0 +1,22 @@
+framework_version: "1"
+id: test.feedback
+protocols: [http, fun]
+depends: []
+stateful: false
+methods:
+  - id: charge
+    description: 扣款
+    input:
+      type: object
+  - id: place
+    description: 下单
+    input:
+      type: object
+  - id: note
+    description: 投递一条反馈
+    input:
+      type: object
+  - id: mixed
+    description: 含非法标签的投递
+    input:
+      type: object

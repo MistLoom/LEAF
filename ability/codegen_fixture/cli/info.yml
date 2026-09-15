@@ -1,0 +1,6 @@
+framework_version: "1"
+binary: codegen_fixture
+entry: run
+args:
+  - name: text
+    positional: true

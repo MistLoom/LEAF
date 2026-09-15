@@ -1,0 +1,18 @@
+framework_version: "1"
+id: codegen.fixture
+protocols: [cli, http, fun]
+depends: []
+stateful: false
+methods:
+  - id: run
+    description: codegen 测试用回显
+    input:
+      type: object
+      properties:
+        text:
+          type: string
+      required: [text]
+  - id: ping
+    description: codegen 测试用 ping
+    input:
+      type: object

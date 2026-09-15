@@ -1,0 +1,26 @@
+# 外部项目：以第三方身份接入 leafEX（不属于 leafEX workspace）
+[package]
+name = "showcase"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "外部接入示例：演示如何访问 leafEX 已开放能力"
+publish = false
+
+[[bin]]
+name = "showcase"
+path = "src/main.rs"
+
+[dependencies]
+frame-compose = { path = "../../frame/compose", default-features = false, features = [
+    "ability-read-file",
+    "ability-write-file",
+    "ability-bash",
+    "ability-todo-write",
+    "ability-task",
+    "port-fun",
+] }
+frame-core = { path = "../../frame/core" }
+frame-port-fun = { path = "../../frame/port-fun" }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

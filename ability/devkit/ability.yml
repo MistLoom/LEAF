@@ -1,0 +1,32 @@
+framework_version: "1"
+id: devkit
+protocols: [http, fun]
+depends: []
+stateful: false
+methods:
+  - id: scaffold
+    description: 从模板生成新能力目录
+    input:
+      type: object
+      properties:
+        template: { type: string }
+        id: { type: string }
+        protocols:
+          type: array
+          items: { type: string }
+        out: { type: string }
+      required: [template, id, out]
+  - id: validate
+    description: 校验能力声明文件
+    input:
+      type: object
+      properties:
+        path: { type: string }
+      required: [path]
+  - id: gen
+    description: 触发 codegen 生成
+    input:
+      type: object
+      properties:
+        path: { type: string }
+      required: [path]
