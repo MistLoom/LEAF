@@ -1,0 +1,20 @@
+# 市面 / 标杆插件清单（不经过 MCP 桥；文件能力走 Leaf Ability + 插件出站 $.fs）
+# Claude 官方：先运行 fetch-ecosystem-vendor.ps1（若脚本存在）拉 vendor
+
+claude_mod:
+  - path: ../vendor/claude-plugins-official/plugins/learning-output-style
+  - path: ../vendor/claude-plugins-official/plugins/explanatory-output-style
+  - path: ../vendor/claude-plugins-official/plugins/security-guidance
+
+dsh:
+  # thin（cookbook）：验证 DSH 注册 → eco__dsh__* → dispatch，无 Cordis/MCP
+  - path: ../tests/fixtures/minimal-dsh.mjs
+  # Cordis 市面包（可选）：fetch 后在 vendor/dsh-npm-profile 执行 npm ci
+  - path: ../vendor/dsh-npm-profile/node_modules/@liustack/modlens
+    loader: cordis
+  - path: ../vendor/dsh-npm-profile/node_modules/@liustack/modsearch
+    loader: cordis
+  - path: ../vendor/dsh-npm-profile/node_modules/dsh-free-search
+    loader: cordis
+  - path: ../vendor/dsh-npm-profile/node_modules/dsh-find-plugin
+    loader: cordis

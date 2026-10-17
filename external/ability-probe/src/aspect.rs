@@ -25,7 +25,12 @@ impl TraceAspect {
 
 #[async_trait]
 impl Aspect for TraceAspect {
-    async fn around(&self, ctx: &dyn AbilityCtx, next: Next<'_>) -> Result<serde_json::Value> {
+    async fn around(
+        &self,
+        ctx: &dyn AbilityCtx,
+        _args: &serde_json::Value,
+        next: Next<'_>,
+    ) -> Result<serde_json::Value> {
         let n = self.hits.fetch_add(1, Ordering::SeqCst) + 1;
         ctx.local_set("aspect.hits", json!(n)).await?;
         next.run().await

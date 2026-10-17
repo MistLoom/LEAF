@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use ability_support::{
-    AbilityCtx, ChainStatus, DiscoveryPayload, Effect, Error, EventFilter, EventHandler,
+    AbilityCtx, Aspect, ChainStatus, DiscoveryPayload, Effect, Error, EventFilter, EventHandler,
     EventListener, EventOpts, EventReg, InstanceId, InvokeMask, LoadSpec, LocalsScope, MethodId,
     ProtocolKind, Result, Undo,
 };
@@ -196,6 +196,11 @@ impl AbilityCtx for InvokeContext {
 
     async fn emit(&self, name: &str, payload: Value) -> Result<()> {
         self.host.emit_ability(&self.instance, name, payload).await
+    }
+
+    fn register_aspect(&self, aspect: Arc<dyn Aspect>) -> Result<()> {
+        self.host.aspects.write().expect("aspects").push(aspect);
+        Ok(())
     }
 }
 

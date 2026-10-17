@@ -1,0 +1,7 @@
+# 合并进 assembly 时启用对应 Ability（路径相对本文件目录）
+# 使用: cargo run -p web-agent -- --plugins apps/web-agent/dsh/web-profile.plugins.yaml serve
+
+claude_mod:
+  - path: ../tests/fixtures/minimal-mod
+dsh:
+  - path: ../tests/fixtures/minimal-dsh.mjs

@@ -24,6 +24,9 @@ members = [
     "ability/chat",
     "ability/turn",
     "ability/session",
+    "ability/plugin_host",
+    "ability/claude_mod",
+    "ability/dsh_plugin",
     "ability/test_feedback",
     "ability/devkit",
     "ability/codegen_fixture",
@@ -38,6 +41,8 @@ members = [
     "apps/runtime",
     "apps/admin",
     "apps/agent-test",
+    "apps/web-agent",
+    "apps/plugin-compat",
 ]
 default-members = ["apps/runtime"]
 
@@ -84,6 +89,9 @@ ai-dispatch = { path = "ability/dispatch" }
 ai-chat = { path = "ability/chat" }
 ai-turn = { path = "ability/turn" }
 ai-session = { path = "ability/session" }
+ability-plugin-host = { path = "ability/plugin_host" }
+ability-claude-mod = { path = "ability/claude_mod" }
+ability-dsh-plugin = { path = "ability/dsh_plugin" }
 sha2 = "0.10"
 encoding_rs = "0.8"
 

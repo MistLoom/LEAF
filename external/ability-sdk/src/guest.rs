@@ -12,8 +12,8 @@ use ability_support::remote::{
     decode_frame, encode_frame, ok_value, Body, CtxOp, Frame, WireError,
 };
 use ability_support::{
-    Ability, AbilityCtx, AbilityProvider, BusEvent, ChainStatus, DiscoveryPayload, Effect, Error,
-    EventFilter, EventHandler, EventListener, EventNext, EventOpts, EventReg, EventUnreg,
+    Ability, AbilityCtx, AbilityProvider, Aspect, BusEvent, ChainStatus, DiscoveryPayload, Effect,
+    Error, EventFilter, EventHandler, EventListener, EventNext, EventOpts, EventReg, EventUnreg,
     FeedbackRecord, FeedbackScope, InstanceId, LoadSpec, MethodId, Result, Undo,
 };
 use serde_json::Value;
@@ -358,6 +358,10 @@ impl AbilityCtx for GuestCtx {
         })
         .await?;
         Ok(())
+    }
+
+    fn register_aspect(&self, _aspect: Arc<dyn Aspect>) -> Result<()> {
+        Err(Error::failed("Guest 不支持 register_aspect"))
     }
 }
 

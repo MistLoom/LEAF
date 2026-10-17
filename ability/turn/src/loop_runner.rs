@@ -279,7 +279,11 @@ async fn fetch_messages(ctx: &dyn AbilityCtx, session_id: &str) -> Result<Vec<Me
 fn calls_for_event(calls: &[ToolCall]) -> Value {
     json!(calls
         .iter()
-        .map(|c| json!({ "id": c.id, "name": c.function.name }))
+        .map(|c| json!({
+            "id": c.id,
+            "name": c.function.name,
+            "arguments": c.function.arguments,
+        }))
         .collect::<Vec<_>>())
 }
 

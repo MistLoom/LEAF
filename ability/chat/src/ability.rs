@@ -65,6 +65,8 @@ struct CompletionArgs {
     #[serde(default)]
     temperature: Option<f32>,
     #[serde(default)]
+    max_tokens: Option<u32>,
+    #[serde(default)]
     model: Option<String>,
 }
 
@@ -93,6 +95,9 @@ impl Ability for ChatAbility {
                 }
                 if let Some(t) = a.temperature {
                     req = req.with_temperature(t);
+                }
+                if let Some(n) = a.max_tokens {
+                    req.max_tokens = Some(n);
                 }
                 let resp = self
                     .client

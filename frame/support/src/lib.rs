@@ -30,7 +30,7 @@ pub use aspect::{Aspect, BoxInvoke, Next};
 pub use catalog::{filter_method_catalog, instance_method_counts, method_catalog, resolve_target, CatalogEntry};
 pub use context::AbilityCtx;
 pub use effect::{Effect, Undo};
-pub use encoding::decode_text_bytes;
+pub use encoding::{decode_text_bytes, decode_text_bytes_strict};
 pub use error::{Error, ErrorKind, Result};
 pub use event::{
     host_event, AbilityEvent, BusEvent, DiscoveryPayload, EventClass, EventFilter, EventHandler,

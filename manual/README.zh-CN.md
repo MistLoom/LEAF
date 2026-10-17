@@ -8,5 +8,6 @@
 | [清单与裁剪](catalog-and-expose.zh-CN.md) | [Catalog & expose](catalog-and-expose.md) |
 | [编写 Ability](writing-abilities.zh-CN.md) | [Write an Ability](writing-abilities.md) |
 | [架构概览](architecture.zh-CN.md) | [Architecture](architecture.md) |
+| [外部生态](ecosystem-plugins.zh-CN.md) | [Ecosystem plugins](ecosystem-plugins.md) |
 
 仓库入口：[README.zh-CN.md](../README.zh-CN.md) · [README.md](../README.md)

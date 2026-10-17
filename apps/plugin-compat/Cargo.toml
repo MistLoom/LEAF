@@ -1,0 +1,13 @@
+[package]
+name = "plugin-compat"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Claude Mod / DSH 静态兼容用例（钩子名与出站 API）"
+publish = false
+
+[dependencies]
+ability-plugin-host = { workspace = true }
+
+[dev-dependencies]

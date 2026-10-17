@@ -1,0 +1,35 @@
+# Web 编码代理标杆装配（生态仅在 abilities.*.config 启用）
+# 插件清单: dsh/web-profile.plugins.yaml → --plugins 合并
+# Web UI: cargo run -p web-agent -- serve  → http://127.0.0.1:8790
+unknown: deny
+defaults:
+  enabled: false
+abilities:
+  chat:
+    enabled: true
+  turn:
+    enabled: true
+    config:
+      max_rounds: 32
+  session:
+    enabled: true
+  dispatch:
+    enabled: true
+  prompt:
+    enabled: true
+  skill:
+    enabled: true
+  read_file:
+    enabled: true
+    config:
+      max_size: 1048576
+  write_file:
+    enabled: true
+  todo_write:
+    enabled: true
+  bash:
+    enabled: true
+  claude_mod:
+    enabled: false
+  dsh_plugin:
+    enabled: false

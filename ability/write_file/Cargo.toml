@@ -13,6 +13,7 @@ name = "write_file"
 path = "src/bin/write_file.rs"
 
 [dependencies]
+base64 = "0.22"
 async-trait.workspace = true
 ability-support.workspace = true
 serde.workspace = true

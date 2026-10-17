@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>leafEX web-agent</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar-head">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>web-agent</h1>
+            <p class="tagline">生态 Ability 标杆</p>
+          </div>
+        </div>
+        <button id="btn-new" type="button" class="btn-new-chat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          新对话
+        </button>
+      </header>
+      <nav class="session-nav" aria-label="会话列表">
+        <ul id="session-list" class="session-list"></ul>
+      </nav>
+      <footer class="sidebar-foot">
+        <span id="status" class="status-dot">就绪</span>
+      </footer>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+    <section class="chat-pane">
+      <header class="chat-header">
+        <button type="button" class="icon-btn" id="btn-sidebar" title="会话列表" aria-label="打开会话列表">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h2 id="chat-title" class="chat-title">新对话</h2>
+        <button type="button" class="icon-btn" id="btn-theme" title="切换主题" aria-label="切换主题">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <button type="button" class="btn-ghost" id="btn-eco-toggle">生态面板</button>
+      </header>
+
+      <div class="chat-scroll">
+        <div id="messages" class="messages" role="log" aria-live="polite"></div>
+      </div>
+
+      <div class="composer-sticky">
+        <form id="composer" class="composer">
+          <div class="composer-shell">
+            <textarea id="prompt" rows="1" placeholder="输入消息…" autocomplete="off"></textarea>
+            <div class="composer-actions">
+              <button type="button" id="btn-stop" class="icon-btn send-stop" title="停止" hidden aria-label="停止生成">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+              </button>
+              <button id="btn-send" type="submit" class="icon-btn send-btn" title="发送" aria-label="发送">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              </button>
+            </div>
+          </div>
+          <p class="composer-hint">Enter 发送 · Shift+Enter 换行</p>
+        </form>
+      </div>
+    </section>
+
+    <aside class="eco-panel" id="eco-panel" aria-label="生态调试">
+      <header class="eco-head">
+        <h2>生态</h2>
+        <button type="button" class="icon-btn" id="btn-eco-close" aria-label="关闭">×</button>
+      </header>
+      <div class="eco-body">
+        <section class="eco-section">
+          <h3>开关</h3>
+          <div id="eco-flags" class="eco-flags"></div>
+        </section>
+        <section class="eco-section eco-actions">
+          <button id="btn-doctor" type="button" class="btn-secondary">Doctor</button>
+          <button id="btn-inventory" type="button" class="btn-secondary">插件清单</button>
+          <button id="btn-session-start" type="button" class="btn-secondary" title="claude_mod session.start">session.start</button>
+        </section>
+        <section class="eco-section">
+          <h3>清单</h3>
+          <pre id="eco-inventory" class="eco-pre"></pre>
+        </section>
+        <section class="eco-section">
+          <h3>本轮生态</h3>
+          <pre id="eco-turn" class="eco-pre"></pre>
+        </section>
+        <section class="eco-section">
+          <h3>dispatch 工具</h3>
+          <ul id="eco-tools" class="eco-tools"></ul>
+        </section>
+        <section class="eco-section">
+          <h3>Doctor 结果</h3>
+          <pre id="eco-doctor" class="eco-pre"></pre>
+        </section>
+        <section class="eco-section">
+          <h3>生态活动（SSE）</h3>
+          <pre id="eco-activity" class="eco-pre eco-activity"></pre>
+        </section>
+        <section class="eco-section">
+          <h3>事件流</h3>
+          <pre id="events" class="eco-pre events"></pre>
+        </section>
+      </div>
+    </aside>
+  </div>
+  <script src="/vendor/marked.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

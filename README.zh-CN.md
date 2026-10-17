@@ -22,6 +22,7 @@ English: [README.md](README.md)
 - **单一调用管道**：Port 与 Agent `dispatch` 均经 `Gateway.invoke`
 - **面向 Agent 的积木**：会话、多轮工具循环、Skill、OpenAI 兼容 chat、文件与终端能力等
 - **可组合**：typed client + `ctx.call`；实例可热装载；对外开放由组合根裁剪
+- **外部生态（可选）**：`claude_mod` / `dsh_plugin` 两个独立 Ability，见 [手册](manual/ecosystem-plugins.zh-CN.md)
 - **声明驱动 codegen**：`ability.yml` 与协议 `info.yml` 生成 Provider，业务代码位于 `src/logic/`
 - **`external/` 为实验性**：独立作者 SDK 与探针仍可能变更
 
@@ -89,7 +90,12 @@ let app = AppBuilder::new()
 
 ### 装配场景应用
 
-`apps/agent-test` 是**简易 Agent 示例**（会话 + 回合循环 + 工具）。自定义应用采用相同模式：
+| 应用 | 用途 |
+|------|------|
+| `apps/agent-test` | **框架原生** Ability：会话、回合、`dispatch`，无 Mod/DSH |
+| `apps/web-agent` | **外部生态**：`claude_mod` / `dsh_plugin`、插件清单、Web 面板；见 [ecosystem-plugins.zh-CN.md](manual/ecosystem-plugins.zh-CN.md) |
+
+自定义应用可沿用 `agent-test` 的装配模式；接入 Claude Mod / DSH 时以 `web-agent` 为参考：
 
 ```rust
 use frame_compose::AppBuilder;
@@ -127,6 +133,8 @@ Port 侧可见性由「已 load + 已登记协议 + access gate」共同决定�
 ```bash
 cargo run -p apps-runtime -- catalog list
 cargo run -p apps-agent-test -- run -p "解释 README.md 的结构"
+cargo run -p web-agent -- doctor
+cargo run -p web-agent -- serve
 cargo build -p ability-echo
 ```
 
@@ -152,6 +160,8 @@ apps/
   ability-core/          引擎
   runtime/               参考运行时
   agent-test/            简易 Agent 示例
+  web-agent/             生态 Ability 标杆（Web UI + 插件清单 + 集成测）
+  plugin-compat/         Mod/DSH 钩子与出站 API 静态用例
 external/                实验性：作者 SDK、codegen、探针
 manual/                  对外公开手册（中英双语）
 ```
@@ -164,10 +174,11 @@ manual/                  对外公开手册（中英双语）
 | [catalog-and-expose.md](manual/catalog-and-expose.md) | [catalog-and-expose.zh-CN.md](manual/catalog-and-expose.zh-CN.md) | 协议清单与 Expose 过滤 |
 | [writing-abilities.md](manual/writing-abilities.md) | [writing-abilities.zh-CN.md](manual/writing-abilities.zh-CN.md) | 编写 Ability |
 | [architecture.md](manual/architecture.md) | [architecture.zh-CN.md](manual/architecture.zh-CN.md) | 公开架构说明 |
+| [ecosystem-plugins.md](manual/ecosystem-plugins.md) | [ecosystem-plugins.zh-CN.md](manual/ecosystem-plugins.zh-CN.md) | Claude Mod / DSH（`web-agent`） |
 
 ## 状态
 
-早期预览，API 与布局可能变化。Agent 路径以 `apps/agent-test` 为参考。
+早期预览，API 与布局可能变化。原生 Agent 以 `apps/agent-test` 为参考；生态兼容以 `apps/web-agent` 为参考。
 
 **`external/` 为实验性**，作者体验定型前可能发生破坏性变更。
 

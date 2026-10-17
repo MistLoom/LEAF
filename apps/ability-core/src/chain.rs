@@ -29,19 +29,18 @@ fn invoke_at<'a>(
         if index < aspects.len() {
             let rest_ability = Arc::clone(&ability);
             let rest_method = method.clone();
-            let rest_args = args.clone();
             let aspect = Arc::clone(&aspects[index]);
-            let next = Next::new(move || {
+            let next = Next::new(args.clone(), move |effective_args| {
                 invoke_at(
                     index + 1,
                     aspects,
                     ctx,
                     rest_ability,
                     rest_method,
-                    rest_args,
+                    effective_args,
                 )
             });
-            aspect.around(ctx, next).await
+            aspect.around(ctx, &args, next).await
         } else {
             ability.invoke(&method, ctx, args).await
         }

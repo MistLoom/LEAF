@@ -10,8 +10,8 @@ fn all_ability_decls_pass_lint() {
     let reports = lint_workspace(&workspace, &opts).expect("lint workspace");
     assert_eq!(
         reports.len(),
-        24,
-        "应校验 24 个内置能力声明目录"
+        26,
+        "应校验 26 个内置能力声明目录"
     );
     assert_clean_reports(&reports).expect("声明校验失败");
 }

@@ -1,6 +1,6 @@
 //! 业务逻辑：run
 
-use ability_support::{decode_text_bytes, AbilityCtx, Error, Result};
+use ability_support::{decode_text_bytes_strict, AbilityCtx, Error, Result};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -15,7 +15,8 @@ pub async fn run(_ctx: &dyn AbilityCtx, args: Value) -> Result<Value> {
     let a: Args = serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
     let raw_bytes = std::fs::read(&a.path)
         .map_err(|e| Error::io(format!("read_file {}: {e}", a.path)))?;
-    let raw = decode_text_bytes(&raw_bytes);
+    let raw = decode_text_bytes_strict(&raw_bytes)
+        .map_err(|m| Error::failed(format!("read_file {}: {m}", a.path)))?;
     let content = slice_lines(&raw, a.offset, a.limit);
     Ok(json!({ "path": a.path, "content": content }))
 }

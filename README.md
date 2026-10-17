@@ -89,7 +89,12 @@ let app = AppBuilder::new()
 
 ### Bootstrap a scenario app
 
-`apps/agent-test` is a **minimal agent example** (session + turn loop + tools). A custom app follows the same shape:
+| App | Role |
+|-----|------|
+| `apps/agent-test` | **Native** abilities only (session, turn, dispatch) |
+| `apps/web-agent` | **External ecosystems** (Claude Mod / DSH); see [ecosystem-plugins.md](manual/ecosystem-plugins.md) |
+
+Custom apps can follow the `agent-test` assembly pattern; for Mod/DSH use `web-agent` as the reference:
 
 ```rust
 use frame_compose::AppBuilder;
@@ -167,7 +172,7 @@ manual/                  Public handbook (EN + ZH)
 
 ## Status
 
-Early preview. APIs and layout may change. Prefer `apps/agent-test` as the reference agent path.
+Early preview. APIs and layout may change. Native agent: `apps/agent-test`. Ecosystem plugins: `apps/web-agent`.
 
 **`external/` is experimental** and may break while the authoring story settles.
 

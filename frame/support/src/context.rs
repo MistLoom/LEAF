@@ -6,8 +6,8 @@ use async_trait::async_trait;
 use serde_json::Value;
 
 use crate::{
-    ChainStatus, DiscoveryPayload, Effect, EventFilter, EventHandler, EventListener, EventOpts,
-    EventReg, InstanceId, LoadSpec, MethodId, ProtocolKind, Result,
+    Aspect, ChainStatus, DiscoveryPayload, Effect, EventFilter, EventHandler, EventListener,
+    EventOpts, EventReg, InstanceId, LoadSpec, MethodId, ProtocolKind, Result,
 };
 
 /// 能力执行上下文。
@@ -69,4 +69,7 @@ pub trait AbilityCtx: Send + Sync {
 
     /// 仅限本 Manifest 声明为 emit 的能力事件。
     async fn emit(&self, name: &str, payload: Value) -> Result<()>;
+
+    /// 向宿主登记切面（通常在 `Lifecycle::Started` 内调用）。
+    fn register_aspect(&self, aspect: Arc<dyn Aspect>) -> Result<()>;
 }

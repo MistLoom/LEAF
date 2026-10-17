@@ -46,6 +46,8 @@ ability-turn = ["dep:ai-turn"]
 ability-skill = ["dep:ai-skill"]
 ability-prompt = ["dep:ai-prompt", "ability-skill"]
 ability-session = ["dep:ai-session"]
+ability-claude-mod = ["dep:ability-claude-mod"]
+ability-dsh-plugin = ["dep:ability-dsh-plugin"]
 mgmt = ["dep:axum", "dep:async-stream", "dep:futures-core", "dep:tower-http"]
 port-fun = ["dep:frame-port-fun"]
 
@@ -79,6 +81,8 @@ ai-turn = { workspace = true, optional = true }
 ai-skill = { workspace = true, optional = true }
 ai-prompt = { workspace = true, optional = true }
 ai-session = { workspace = true, optional = true }
+ability-claude-mod = { workspace = true, optional = true }
+ability-dsh-plugin = { workspace = true, optional = true }
 frame-port-fun = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 async-stream = { version = "0.3", optional = true }

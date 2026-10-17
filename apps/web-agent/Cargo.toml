@@ -1,0 +1,68 @@
+[package]
+name = "web-agent"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Web 编码代理参考应用（可选 claude_mod / dsh_plugin）"
+default-run = "web-agent"
+
+[[bin]]
+name = "web-agent"
+path = "src/main.rs"
+
+[features]
+default = [
+    "ability-read-file",
+    "ability-write-file",
+    "ability-todo-write",
+    "ability-bash",
+    "ability-dispatch",
+    "ability-chat",
+    "ability-turn",
+    "ability-session",
+    "ability-prompt",
+    "ability-skill",
+    "ability-claude-mod",
+    "ability-dsh-plugin",
+]
+
+ability-read-file = ["frame-compose/ability-read-file"]
+ability-write-file = ["frame-compose/ability-write-file"]
+ability-todo-write = ["frame-compose/ability-todo-write"]
+ability-bash = ["frame-compose/ability-bash"]
+ability-dispatch = ["frame-compose/ability-dispatch"]
+ability-chat = ["frame-compose/ability-chat"]
+ability-turn = ["frame-compose/ability-turn"]
+ability-session = ["frame-compose/ability-session"]
+ability-prompt = ["frame-compose/ability-prompt"]
+ability-skill = ["frame-compose/ability-skill"]
+ability-claude-mod = ["frame-compose/ability-claude-mod"]
+ability-dsh-plugin = ["frame-compose/ability-dsh-plugin"]
+
+[dependencies]
+async-trait = { workspace = true }
+axum = { workspace = true }
+clap = { workspace = true }
+frame-compose = { workspace = true }
+frame-core = { workspace = true }
+ability-core = { workspace = true }
+ability-plugin-host = { workspace = true }
+ability-support = { workspace = true }
+futures-util = "0.3"
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { workspace = true, features = ["cors"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[lib]
+name = "web_agent"
+path = "src/lib.rs"
+
+[dev-dependencies]
+serial_test = "3"
+tempfile = "3"

@@ -16,22 +16,30 @@ pub trait Aspect: Send + Sync {
         0
     }
 
-    async fn around(&self, ctx: &dyn AbilityCtx, next: Next<'_>) -> Result<Value>;
+    async fn around(&self, ctx: &dyn AbilityCtx, args: &Value, next: Next<'_>) -> Result<Value>;
 }
 
 pub struct Next<'a> {
-    inner: Box<dyn FnOnce() -> BoxInvoke<'a> + Send + 'a>,
+    inner: Box<dyn FnOnce(Value) -> BoxInvoke<'a> + Send + 'a>,
+    default_args: Value,
 }
 
 impl<'a> Next<'a> {
-    pub fn new<F>(f: F) -> Self
+    pub fn new<F>(default_args: Value, f: F) -> Self
     where
-        F: FnOnce() -> BoxInvoke<'a> + Send + 'a,
+        F: FnOnce(Value) -> BoxInvoke<'a> + Send + 'a,
     {
-        Self { inner: Box::new(f) }
+        Self {
+            inner: Box::new(f),
+            default_args,
+        }
     }
 
     pub fn run(self) -> BoxInvoke<'a> {
-        (self.inner)()
+        (self.inner)(self.default_args)
+    }
+
+    pub fn with_args(self, args: Value) -> BoxInvoke<'a> {
+        (self.inner)(args)
     }
 }
