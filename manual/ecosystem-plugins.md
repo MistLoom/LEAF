@@ -46,6 +46,16 @@ abilities:
 
 Version pins and supported npm ranges: `apps/plugin-host/dsh-runtime.compat.json`. `doctor` reports embedded DSH status; set `LEAF_DSH_STRICT=1` to fail on drift.
 
+### Claude Mod bounded contract (`hooks_command`)
+
+Manifest: `apps/plugin-host/claude-mod.compat.json`.
+
+| Supported | Not supported |
+|---|---|
+| `hooks.json` command hooks only, or `modules` listing `.mjs`/`.js` entry files | `modules` entries ending in `.ts`/`.tsx` (official `register`, desktop pane UI) |
+
+`vendor_plugins_dir` skips TypeScript module plugins. Explicit `path` to them fails at merge/doctor (`claude_mod_unsupported:hooks_modules`). Host init fails on any `load_errors` by default; set `LEAF_CLAUDE_MOD_STRICT=0` to warn only. Set `LEAF_CLAUDE_MOD_STRICT=1` to fail vendor expand when a skipped TS module plugin is present.
+
 ## Tools and hooks
 
 On startup the host merges plugin entries and registers `EcosystemDispatchAspect`. Model-visible tool names:

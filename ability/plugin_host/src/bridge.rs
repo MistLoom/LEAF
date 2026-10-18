@@ -7,6 +7,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use ability_support::{AbilityCtx, Error, Result};
+
+use crate::claude_mod_shape::claude_mod_load_strict;
 use serde_json::{json, Value};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
@@ -244,6 +246,12 @@ impl PluginHostBridge {
                     .to_string(),
             ));
         }
+        if let Some(msg) = plugin_load_errors_message(&ready) {
+            if claude_mod_load_strict() {
+                return Err(Error::failed(msg));
+            }
+            tracing::warn!("{msg}");
+        }
         Ok((bridge, ready))
     }
 
@@ -318,6 +326,22 @@ impl PluginHostBridge {
             })
             .collect()
     }
+}
+
+fn plugin_load_errors_message(ready: &Value) -> Option<String> {
+    let errors = ready.get("load_errors").and_then(|v| v.as_array())?;
+    if errors.is_empty() {
+        return None;
+    }
+    let lines: Vec<String> = errors
+        .iter()
+        .filter_map(|e| {
+            let path = e.get("path").and_then(|v| v.as_str()).unwrap_or("?");
+            let err = e.get("error").and_then(|v| v.as_str()).unwrap_or("?");
+            Some(format!("{path}: {err}"))
+        })
+        .collect();
+    Some(format!("插件加载失败: {}", lines.join("; ")))
 }
 
 fn hook_value(frame: &Value) -> Value {

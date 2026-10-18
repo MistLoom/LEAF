@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { execFileSync, spawn } from "node:child_process";
+import { claudeModAdmissionError } from "./claude-mod/compat.mjs";
 
 /** Claude Code 事件名 → Leaf Mod 钩子名（与 wire 转发一致） */
 const OFFICIAL_EVENT_TO_LEAF = {
@@ -196,25 +197,57 @@ function mergeHookOutput(base, extra) {
   return merged;
 }
 
-export async function loadClaudeMod(root, $, register, _registerTool) {
+/** 从 `.claude-plugin/plugin.json` 的 `userConfig` 取默认值，再叠装配里的 `config`。 */
+async function pluginOptionsFromRoot(pluginRoot, entryConfig) {
+  const defaults = {};
+  const pluginJson = path.join(pluginRoot, ".claude-plugin", "plugin.json");
+  if (existsSync(pluginJson)) {
+    try {
+      const doc = JSON.parse(await readFile(pluginJson, "utf8"));
+      const userConfig = doc.userConfig;
+      if (userConfig && typeof userConfig === "object") {
+        for (const [key, spec] of Object.entries(userConfig)) {
+          if (spec && typeof spec === "object" && "default" in spec) {
+            defaults[key] = spec.default;
+          }
+        }
+      }
+    } catch {
+      // 元数据损坏时仍用空默认，由 Mod 自身 optionsOf 兜底
+    }
+  }
+  const override =
+    entryConfig && typeof entryConfig === "object" && !Array.isArray(entryConfig) ? entryConfig : {};
+  return { ...defaults, ...override };
+}
+
+export async function loadClaudeMod(root, $, register, _registerTool, entryMeta = {}) {
   const pluginRoot = hostPath(root);
+  const admission = claudeModAdmissionError(pluginRoot);
+  if (admission !== null) {
+    throw new Error(admission);
+  }
   const hooksPath = path.join(pluginRoot, "hooks", "hooks.json");
   const raw = await readFile(hooksPath, "utf8");
   const manifest = JSON.parse(raw);
   registerCommandHooks(manifest, pluginRoot, register);
+  const pluginOptions = await pluginOptionsFromRoot(pluginRoot, entryMeta.config);
 
   for (const rel of manifest.modules ?? []) {
     const file = path.join(pluginRoot, "hooks", rel.replace(/^\.\//, ""));
     const mod = await import(pathToFileURL(file).href);
     if (typeof mod.register === "function") {
-      mod.register((event, filterOrFn, maybeFn) => {
-        let handler = filterOrFn;
-        if (typeof filterOrFn !== "function") {
-          handler = maybeFn;
-        }
-        if (typeof handler !== "function") return;
-        register(event, handler);
-      });
+      mod.register(
+        (event, filterOrFn, maybeFn) => {
+          let handler = filterOrFn;
+          if (typeof filterOrFn !== "function") {
+            handler = maybeFn;
+          }
+          if (typeof handler !== "function") return;
+          register(event, handler);
+        },
+        pluginOptions,
+      );
     }
   }
 }

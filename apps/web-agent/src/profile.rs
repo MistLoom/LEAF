@@ -2,9 +2,12 @@
 
 use std::path::{Path, PathBuf};
 
+use ability_plugin_host::ensure_claude_mod_path_allowed;
+use ability_plugin_host::should_skip_vendor_claude_plugin;
 use frame_core::{AbilityExpose, Error, Result};
 use serde::Deserialize;
 use serde_json::{json, Value};
+use tracing::warn;
 
 #[derive(Debug, Default, Deserialize)]
 struct PluginsProfile {
@@ -96,7 +99,7 @@ pub fn apply_plugins_profile(doc: &mut Value, profile_path: &Path) -> Result<()>
     if !profile.claude_mod.is_empty() {
         let entry = abilities.entry("claude_mod".to_string()).or_insert(json!({}));
         entry["enabled"] = json!(true);
-        let plugins = resolve_plugin_entries(base, &profile.claude_mod)?
+        let plugins = resolve_plugin_entries(base, &profile.claude_mod, true)?
             .iter()
             .map(plugin_entry_json)
             .collect::<Vec<_>>();
@@ -105,7 +108,7 @@ pub fn apply_plugins_profile(doc: &mut Value, profile_path: &Path) -> Result<()>
     if !profile.dsh.is_empty() {
         let entry = abilities.entry("dsh_plugin".to_string()).or_insert(json!({}));
         entry["enabled"] = json!(true);
-        let plugins = resolve_plugin_entries(base, &profile.dsh)?
+        let plugins = resolve_plugin_entries(base, &profile.dsh, false)?
             .iter()
             .map(plugin_entry_json)
             .collect::<Vec<_>>();
@@ -114,15 +117,19 @@ pub fn apply_plugins_profile(doc: &mut Value, profile_path: &Path) -> Result<()>
     Ok(())
 }
 
-fn resolve_plugin_entries(base: &Path, entries: &[PluginPath]) -> Result<Vec<ResolvedPlugin>> {
+fn resolve_plugin_entries(
+    base: &Path,
+    entries: &[PluginPath],
+    claude_mod: bool,
+) -> Result<Vec<ResolvedPlugin>> {
     let mut out = Vec::new();
     for entry in entries {
-        out.extend(expand_plugin_entry(base, entry)?);
+        out.extend(expand_plugin_entry(base, entry, claude_mod)?);
     }
     Ok(out)
 }
 
-fn expand_plugin_entry(base: &Path, entry: &PluginPath) -> Result<Vec<ResolvedPlugin>> {
+fn expand_plugin_entry(base: &Path, entry: &PluginPath, claude_mod: bool) -> Result<Vec<ResolvedPlugin>> {
     let mode_count = [
         entry.path.is_some(),
         entry.vendor_npm.is_some(),
@@ -137,8 +144,12 @@ fn expand_plugin_entry(base: &Path, entry: &PluginPath) -> Result<Vec<ResolvedPl
         ));
     }
     if let Some(path) = &entry.path {
+        let resolved = resolve_profile_path(base, path);
+        if claude_mod {
+            ensure_claude_mod_path_allowed(Path::new(&resolved))?;
+        }
         return Ok(vec![ResolvedPlugin {
-            path: resolve_profile_path(base, path),
+            path: resolved,
             loader: entry.loader.clone(),
             config: entry.config.clone(),
         }]);
@@ -147,6 +158,9 @@ fn expand_plugin_entry(base: &Path, entry: &PluginPath) -> Result<Vec<ResolvedPl
         return expand_vendor_npm(base, vendor, entry);
     }
     let dir = entry.vendor_plugins_dir.as_ref().expect("vendor_plugins_dir");
+    if !claude_mod {
+        return Err(Error::config("vendor_plugins_dir 仅用于 claude_mod 清单"));
+    }
     expand_claude_vendor_plugins_dir(base, dir, entry)
 }
 
@@ -198,6 +212,7 @@ fn expand_claude_vendor_plugins_dir(
         return Err(Error::config(format!("vendor_plugins_dir 不是目录: {}", root.display())));
     }
     let mut plugins = Vec::new();
+    let mut skipped_module = Vec::new();
     let children = std::fs::read_dir(&root).map_err(|e| {
         Error::config(format!("读取 vendor_plugins_dir 失败 {}: {e}", root.display()))
     })?;
@@ -207,13 +222,24 @@ fn expand_claude_vendor_plugins_dir(
         if !path.is_dir() {
             continue;
         }
-        if path.join("hooks").join("hooks.json").is_file() {
-            plugins.push(ResolvedPlugin {
-                path: path.to_string_lossy().into_owned(),
-                loader: template.loader.clone(),
-                config: template.config.clone(),
-            });
+        if !path.join("hooks").join("hooks.json").is_file() {
+            continue;
         }
+        if should_skip_vendor_claude_plugin(&path)? {
+            skipped_module.push(path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default());
+            continue;
+        }
+        plugins.push(ResolvedPlugin {
+            path: path.to_string_lossy().into_owned(),
+            loader: template.loader.clone(),
+            config: template.config.clone(),
+        });
+    }
+    if !skipped_module.is_empty() {
+        warn!(
+            skipped = skipped_module.join(", "),
+            "vendor_plugins_dir 已跳过 hooks_module tier 插件（仅支持 hooks_command）"
+        );
     }
     plugins.sort_by(|a, b| a.path.cmp(&b.path));
     if plugins.is_empty() {

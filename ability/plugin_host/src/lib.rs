@@ -1,6 +1,7 @@
 //! 外部插件 Node 宿主桥接，仅供 `claude_mod` / `dsh_plugin` 等 Ability 依赖。
 
 mod bridge;
+mod claude_mod_shape;
 mod coordinator;
 mod doctor;
 mod ecosystem_aspect;
@@ -13,6 +14,11 @@ mod user_fanout;
 mod wire;
 
 pub use bridge::PluginHostBridge;
+pub use claude_mod_shape::{
+    classify_claude_mod_root, claude_mod_load_strict, ensure_claude_mod_path_allowed,
+    should_skip_vendor_claude_plugin, ClaudeModShape, SUPPORTED_TIER_HOOKS_COMMAND,
+    UNSUPPORTED_HOOKS_MODULES,
+};
 pub use coordinator::{coordinator, plugin_instance_id, PluginHostCoordinator};
 pub use ecosystem_aspect::EcosystemDispatchAspect;
 pub use doctor::{diagnose_config, diagnose_config_async, report_to_value, PluginDoctorReport};

@@ -5,6 +5,7 @@ use std::path::Path;
 use serde::Serialize;
 use serde_json::{json, Value};
 
+use crate::claude_mod_shape::ensure_claude_mod_path_allowed;
 use crate::coordinator::plugin_entry_to_init;
 use crate::runtime::{PluginHostConfig, PluginHostKind, resolve_plugin_path_public, resolve_host_script};
 
@@ -83,7 +84,16 @@ pub async fn diagnose_config_async(
     kind: PluginHostKind,
 ) -> PluginDoctorReport {
     let mut report = diagnose_config(cfg);
-    if !report.node || !report.host_script_exists || cfg.plugins.is_empty() {
+    if kind == PluginHostKind::ClaudeMod {
+        for entry in &cfg.plugins {
+            let abs = resolve_plugin_path_public(&entry.path);
+            if let Err(e) = ensure_claude_mod_path_allowed(std::path::Path::new(&abs)) {
+                report.ok = false;
+                report.errors.push(e.to_string());
+            }
+        }
+    }
+    if !report.ok || !report.node || !report.host_script_exists || cfg.plugins.is_empty() {
         return report;
     }
     let plugins = cfg

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "esbuild": "^0.25.0",
     "@deepseek-ai/cordis": "^4.0.4",
     "@deepseek-ai/dsh-agent": "0.0.1-rc.5",
     "@deepseek-ai/dsh-attachment": "0.0.1-rc.5",

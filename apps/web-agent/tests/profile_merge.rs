@@ -80,6 +80,60 @@ fn vendor_plugins_dir_finds_claude_mod_hooks() {
 }
 
 #[test]
+fn vendor_plugins_dir_skips_hooks_module_tier() {
+    let tmp = TempDir::new().expect("tmpdir");
+    let root = tmp.path().join("plugins");
+    let good = root.join("good-mod");
+    std::fs::create_dir_all(good.join("hooks")).expect("hooks");
+    std::fs::write(good.join("hooks/hooks.json"), "{}").expect("hooks.json");
+    let module = root.join("module-mod");
+    std::fs::create_dir_all(module.join("hooks")).expect("hooks");
+    std::fs::write(
+        module.join("hooks/hooks.json"),
+        r#"{"modules":["./register.ts"]}"#,
+    )
+    .expect("hooks.json");
+
+    let profile = tmp.path().join("profile.yaml");
+    std::fs::write(
+        &profile,
+        "claude_mod:\n  - vendor_plugins_dir: ./plugins\n",
+    )
+    .expect("profile");
+
+    let mut doc = serde_json::json!({ "abilities": {} });
+    apply_plugins_profile(&mut doc, &profile).expect("merge");
+    let plugins = doc["abilities"]["claude_mod"]["config"]["plugins"]
+        .as_array()
+        .expect("plugins");
+    assert_eq!(plugins.len(), 1);
+    assert!(plugins[0]["path"].as_str().unwrap().ends_with("good-mod"));
+}
+
+#[test]
+fn explicit_path_to_hooks_module_fails() {
+    let tmp = TempDir::new().expect("tmpdir");
+    let mod_dir = tmp.path().join("module-mod");
+    std::fs::create_dir_all(mod_dir.join("hooks")).expect("hooks");
+    std::fs::write(
+        mod_dir.join("hooks/hooks.json"),
+        r#"{"modules":["./register.ts"]}"#,
+    )
+    .expect("hooks.json");
+
+    let profile = tmp.path().join("profile.yaml");
+    std::fs::write(
+        &profile,
+        "claude_mod:\n  - path: ./module-mod\n",
+    )
+    .expect("profile");
+
+    let mut doc = serde_json::json!({ "abilities": {} });
+    let err = apply_plugins_profile(&mut doc, &profile).expect_err("reject");
+    assert!(err.to_string().contains("claude_mod_unsupported:hooks_modules"));
+}
+
+#[test]
 fn plugins_profile_enables_eco_abilities() {
     let assembly = default_assembly_path();
     let profile = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("dsh/web-profile.plugins.yaml");

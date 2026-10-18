@@ -61,6 +61,7 @@ export class HostRuntime {
             this.$,
             (name, fn) => this.registerHook(name, fn),
             registerTool,
+            entry,
           );
         } else if (entry.kind === "dsh") {
           const { abs, url } = resolveEntryPaths(entry.path);

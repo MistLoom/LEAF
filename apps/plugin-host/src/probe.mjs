@@ -46,7 +46,7 @@ export async function probeEntry(entry, hostCall) {
   const registerTool = (def) => tools.push(def.name);
   try {
     if (entry.kind === "claude_mod") {
-      await loadClaudeMod(entry.path, $, registerHook, registerTool);
+      await loadClaudeMod(entry.path, $, registerHook, registerTool, entry);
     } else if (entry.kind === "dsh") {
       const { abs, url } = resolveEntryPaths(entry.path);
       await loadDshEntry(abs, url, entry, registerHook, registerTool);

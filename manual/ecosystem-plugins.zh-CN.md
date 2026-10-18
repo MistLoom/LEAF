@@ -46,6 +46,21 @@ abilities:
 
 npm 钉扎与受支持范围：`apps/plugin-host/dsh-runtime.compat.json`。`doctor` 会报告内嵌 DSH 状态；设置 `LEAF_DSH_STRICT=1` 可在版本漂移时失败。
 
+### Claude Mod 有界契约（`hooks_command`）
+
+契约清单：`apps/plugin-host/claude-mod.compat.json`（与 DSH compat 并列）。
+
+| 支持 | 不支持 |
+|---|---|
+| `hooks.json` 仅 command 钩子，或 `modules` 仅 `.mjs`/`.js` 单文件 | `modules` 含 `.ts`/`.tsx`（官方 `register`、桌面 pane 类 UI） |
+
+- `vendor_plugins_dir` 展开时**自动跳过** `hooks_module` 插件（日志 `skipped`），不把未支持形态送进宿主。
+- 用 `path:` **显式**指向 `hooks_module` 插件时，装配合并或 `doctor` **直接失败**（错误码 `claude_mod_unsupported:hooks_modules`）。
+- 任一已配置插件在宿主 `init` 中加载失败时，默认**阻止** `claude_mod` / `dsh_plugin` 启动；仅开发时可设 `LEAF_CLAUDE_MOD_STRICT=0` 降级为告警。
+- `vendor_plugins_dir` 下若存在 module 插件且需强制失败（不跳过），可设 `LEAF_CLAUDE_MOD_STRICT=1`。
+
+非目标：Claude Code 桌面 UI / pane 对等；勿指望官方 vendor 中 `code-modernization` 等 `modules` 插件在 Leaf 默认可用。
+
 ## 工具与钩子
 
 启动时宿主合并插件列表并注册 `EcosystemDispatchAspect`。模型可见工具名：
