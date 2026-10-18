@@ -3,6 +3,7 @@
   "private": true,
   "description": "市面 DSH Cordis npm 插件（不含 MCP 桥），由 fetch-ecosystem-vendor 或手动 npm install 安装",
   "dependencies": {
+    "@deepseek-ai/dsh-settings": "0.1.7-rc.2",
     "@liustack/modlens": "3.26.6",
     "@liustack/modsearch": "5.10.7",
     "dsh-find-plugin": "0.4.0",

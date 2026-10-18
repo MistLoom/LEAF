@@ -20,7 +20,6 @@ name = "ability-claude-mod"
 version = "0.1.0"
 dependencies = [
  "ability-plugin-host",
- "ability-sdk-codegen",
  "ability-support",
  "async-trait",
  "serde",
@@ -99,7 +98,6 @@ name = "ability-dsh-plugin"
 version = "0.1.0"
 dependencies = [
  "ability-plugin-host",
- "ability-sdk-codegen",
  "ability-support",
  "async-trait",
  "serde",
