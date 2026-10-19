@@ -1,160 +1,186 @@
 # LEAF
 
-**一套 Ability，同时服务 Agent、MCP、CLI 与 HTTP。**
+**LEAF 是以 Rust 构建、为 AI 生态打造的轻量化 AI 开发框架**，一套 **Ability** 同时服务 Agent、MCP、CLI、Skill、Tools 与 HTTP 等协议。
 
-LEAF 是面向 AI 系统的 Rust 能力运行时。工具、Skill、MCP、服务统一建模为 **Ability**，经同一条 `Gateway` 调用（`instance + method + args`）。
+帮助团队与个人快速构建**安全、可靠、高性能**的 harness、个人助手、企业内部 AI、Tools 网关等系统与应用。
 
-业务实现一次，在装配阶段投影到 LLM `tool_calls`、MCP tools、CLI 或 HTTP，无需在能力内部绑定协议身份。可用该框架实现个人或企业内部的 AI 系统，以及连接模型、工具与插件的 harness。
+**多协议 AI 能力层**支撑同一份能力被统一组织、装配、暴露和治理，借助 Ability 实现**跨应用、跨系统调度**。
 
-[功能](#功能) · [创建应用](#创建应用) · [调用](#调用) · [订阅事件](#订阅事件) · [快速开始](#快速开始) · [手册](#手册) · [状态](#状态)
+对于多 Ability 间通信，支持**同一片内存空间**、**多进程**、**跨设备网络协议**等不同模型，可按性能、可用性等要求进行定制。
+
+> **实验性特性**：支持 DeepSeek harness 插件、Claude Mod 等生态；以 Ability 在系统边缘实现兼容，并提供参考示例。详见 [生态插件](manual/ecosystem-plugins.zh-CN.md)。
+
+[传统 AI 系统问题](#传统-ai-系统问题) · [核心结构](#核心结构app--ability--gateway) · [运行时形态](#运行时形态的理由) · [关键特性](#关键特性) · [手册](#手册) · [项目状态](#项目状态) · [贡献](#贡献)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://www.rust-lang.org/)
-[![Status](https://img.shields.io/badge/status-early%20preview-yellow.svg)](#状态)
+[![Status](https://img.shields.io/badge/status-early%20preview-yellow.svg)](#项目状态)
 
 English: [README.md](README.md)
 
 ---
 
-## 功能
+## 传统 AI 系统问题
 
-- **协议无关的 Ability**：CLI / HTTP / MCP / Fun / gRPC / LLM tools 均为投影，而非内核类型
-- **单一调用管道**：Port 与 Agent `dispatch` 均经 `Gateway.invoke`
-- **面向 Agent 的积木**：会话、多轮工具循环、Skill、OpenAI 兼容 chat、文件与终端能力等
-- **可组合**：typed client + `ctx.call`；实例可热装载；对外开放由组合根裁剪
-- **应用级事件**：入口应用通过 `AppControl` 监听与拦截 Ability 事件
-- **声明驱动 codegen**：`ability.yml` 与协议 `info.yml` 生成 Provider，业务代码位于 `src/logic/`
-- **`external/` 为实验性**：独立作者 SDK 与探针仍可能变更
+目前一些 AI 应用系统区别于传统专有系统设计，内部往往存在不同子场景划分。除了可能需要对接旧系统外，不同子应用间还可能存在联动、协同工作的需要，例如：
 
-## 创建应用
+- 对话侧触发检索与工单
+- 在同一业务流中串联文档理解与命令执行
+- 在采集完数据后，由其他系统进行分析或文章撰写。
 
-在 `apps/` 下新增 crate，并写入 workspace `members`。依赖 `frame-compose` 并保留默认 features，以链入 `common/ability` 中的通用能力。
+在 AI 系统里，一个「识别图片」或「执行命令」的能力，经常需要同时出现在多个地方：
 
-```rust
-use frame_compose::AppBuilder;
+| 出口      | 形态           |
+| ------- | ------------ |
+| Agent   | `tool_calls` |
+| MCP     | tools        |
+| CLI     | 命令           |
+| HTTP    | API          |
+| Harness | 内部调度入口       |
 
-let app = AppBuilder::new()
-    .app("my-app")
-    .bootstrap()
-    .await;
-```
+部分能力还需以 **Skill** 等方式暴露给统一的 Agent 入口。若为其各写一套适配代码，会带来几个工程问题：
 
-`app` 为入口应用，名称与 `apps/<name>` 目录一致。`bootstrap` 返回 `AppHandle`（`gateway`、`host`、`expose`、`catalog`、`control`）。
+- 同一业务逻辑**重复实现**
+- 不同协议下**行为不一致**
+- **鉴权、限流、观测**分散在各处
+- 裁剪最小运行时需要**改业务代码**
+- 新增协议出口要**动很多地方**
 
-| 路径 | 归属 |
-|---|---|
-| `common/ability/<name>/` | 通用 Ability。入口应用可调用、监听并拦截 |
-| `apps/<app>/ability/<name>/` | 该应用私有。其他应用仅在 `open: true` 时可调用 |
+LEAF 的设计出发点：**能力实现保持协议无关，协议映射推迟到装配阶段完成**。
 
-`apps/agent-test` 为 Agent 回路示例。`apps/web-agent` 为 Web 参考应用，并使用上述两类已开放 Ability。装配细节见 [快速开始](manual/getting-started.zh-CN.md)。
+---
 
-## 调用
+## 核心结构：App + Ability + Gateway
 
-```rust
-use frame_core::{Gateway, InstanceId, InvokeRequest, MethodId};
-use serde_json::json;
+| 概念          | 职责     | 关键点                                             |
+| ----------- | ------ | ----------------------------------------------- |
+| **Ability** | 实现具体能力 | 协议无关，只关心「做什么」                                   |
+| **App**     | 装配和治理  | 决定加载哪些 Ability、绑定什么配置、暴露哪些协议端口                  |
+| **Gateway** | 统一调用管道 | 所有调用走 `instance + method + args`，形成单一观测、鉴权、限流入口 |
 
-let response = app
-    .gateway
-    .invoke(InvokeRequest::new(
-        InstanceId::new("read_file")?,
-        MethodId::new("run")?,
-        json!({ "path": "README.md" }),
-    ))
-    .await?;
-```
+> **Ability** 是稳定的原子，**App** 是多变的装配策略，**Gateway** 是统一的执行入口。
 
-Ability 之间只依赖对方 **client**，不依赖其 Provider：
+## 运行时形态的理由
 
-```rust
-use ability_echo::EchoExt;
+LEAF 要保证能力按统一方式被调用、暴露和治理。这需要运行时控制权：
 
-ctx.echo().run(args).await?;
-```
+| 诉求       | 说明                                                                |
+| -------- | ----------------------------------------------------------------- |
+| **统一入口** | 库形态下调用方可绕过 Gateway 直接调业务函数，统一观测和治理会失效                             |
+| **协议投影** | 同时作为 MCP server、CLI、HTTP API 暴露，涉及注册表、路由、配置加载和进程生命周期              |
+| **装配裁剪** | `AbilityExpose` 等配置决定加载、禁用与参数绑定，属于应用装配阶段                          |
+| **声明驱动** | `ability.yml`、协议 `info.yml`、生成 Provider、`src/logic/` 等业务布局属于框架式约定 |
 
-`AbilityExpose` 裁剪 Port 上的加载与可见性，不限制同应用 `ctx.call`。跨应用调用要求目标 `open: true`。见 [清单与裁剪](manual/catalog-and-expose.zh-CN.md)。
+App 持有装配与治理，Ability 保持纯粹与可复用。同一套 Ability 仓库可装配出不同形态的运行时：
 
-## 订阅事件
+- `AbilityExpose` 控制 Port 可见性
+- 同应用内 `ctx.call` 不受限制
+- 跨应用调用要求目标 `open: true`
 
-```rust
-use ability_support::{EventClass, EventFilter, EventListener};
+详见 [清单与裁剪](manual/catalog-and-expose.zh-CN.md)。
 
-let mut events = app
-    .control()
-    .listen(EventFilter {
-        class: Some(EventClass::Ability),
-        ..Default::default()
-    })
-    .await?;
+LEAF 的范围收敛在**能力层运行时**，应用主循环由使用方管理。内部和边缘提供库 / SDK 形态：
 
-while let Some(event) = events.next().await {
-    println!("{} {}", event.name(), event.payload());
-}
-```
+- `Ability SDK`
+- `Gateway client`
+- 协议适配器
+- 配置解析器
+- 代码生成器
 
-`AppHandle::control()` 返回入口应用的 `AppControl`。`listen` 投递本应用、`common`，以及其他应用中 `open: true` 的 Ability 事件。`intercept` 作用于本应用与 `common`。
+既保证统一治理，也允许局部复用。架构细节见 [架构概览](manual/architecture.zh-CN.md)。
 
-## 快速开始
+---
 
-需要较新的 Rust 工具链（workspace 使用 edition 2024）。
+## 关键特性
 
-```bash
-cargo run -p web-agent -- doctor
-cargo run -p web-agent -- serve
-cargo run -p apps-agent-test -- run -p "解释 README.md 的结构"
-```
+| 特性                  | 说明                                                                    |
+| ------------------- | --------------------------------------------------------------------- |
+| **一次实现，多协议投影**      | 同一份 Ability 可装配为 MCP、CLI、HTTP 或 Agent 工具调用，业务逻辑集中在能力层                 |
+| **统一 Gateway 调用管道** | 调用格式统一为 `instance + method + args`，单一观测、鉴权与限流入口                       |
+| **装配期裁剪**           | `AbilityExpose` 以实例为单位控制加载、禁用与参数绑定，同一套代码可装配不同功能组合与最小运行时               |
+| **声明驱动与代码生成**       | `ability.yml` 与协议 `info.yml` 生成 Provider，业务逻辑在 `src/logic/`，减少样板与适配分叉 |
+| **面向 AI 系统的原生积木**   | 会话、多轮工具循环、Skill、OpenAI 兼容 chat 等；Agent 是消费者之一                         |
+| **Rust 运行时**        | Workspace 使用 Rust edition 2024，侧重内存安全、高性能与可部署性                        |
+| **生态适配在边缘**         | 外部兼容通过独立 Ability 或装配模块接入，核心 Ability 与引擎保持稳定                           |
 
-## 编写 Ability
+---
 
-```
-common/ability/<name>/          # 通用
-apps/<app>/ability/<name>/      # 归属该应用
-  ability.yml
-  build.rs
-  src/logic/
-  src/generated/
-  mcp|cli|tools|…/info.yml
-```
+## 适合谁
 
-见 [编写 Ability](manual/writing-abilities.zh-CN.md)。
+| 场景              | 说明                                  |
+| --------------- | ----------------------------------- |
+| **多协议出口**       | 需要同时服务 Agent、MCP、CLI、HTTP 等多种暴露面的团队 |
+| **网关与 Harness** | 构建 MCP 服务、工具网关或 Harness 运行时         |
+| **统一治理**        | 希望收敛鉴权、限流、观测与装配策略的基础设施团队            |
+| **按场景裁剪**       | 不同部署需要不同能力组合                        |
+| **早期共建**        | 愿意参与运行时设计的 Rust / AI 基础设施工程师        |
 
-## 仓库结构
-
-```
-frame/                   support、core、compose、port-*、protocol
-common/ability/          通用 Ability
-apps/
-  ability-core/          引擎
-  agent-test/ability/    Agent 回路 Ability
-  web-agent/             Web 参考应用
-external/                实验性：作者 SDK、codegen、探针
-manual/                  对外公开手册（中英双语）
-```
+---
 
 ## 手册
 
-| English | 中文 | 内容 |
-|---|---|---|
-| [getting-started.md](manual/getting-started.md) | [getting-started.zh-CN.md](manual/getting-started.zh-CN.md) | 创建应用、调用与订阅 |
-| [catalog-and-expose.md](manual/catalog-and-expose.md) | [catalog-and-expose.zh-CN.md](manual/catalog-and-expose.zh-CN.md) | 协议清单与 Expose 过滤 |
-| [writing-abilities.md](manual/writing-abilities.md) | [writing-abilities.zh-CN.md](manual/writing-abilities.zh-CN.md) | 编写 Ability |
-| [architecture.md](manual/architecture.md) | [architecture.zh-CN.md](manual/architecture.zh-CN.md) | 公开架构说明 |
-| [ecosystem-plugins.md](manual/ecosystem-plugins.md) | [ecosystem-plugins.zh-CN.md](manual/ecosystem-plugins.zh-CN.md) | 可选：Claude Code Mod 与 DSH |
+| 中文                                              | English                                          | 内容                    |
+| ----------------------------------------------- | ------------------------------------------------ | --------------------- |
+| [快速开始](manual/getting-started.zh-CN.md)         | [Getting started](manual/getting-started.md)     | 创建应用、调用与订阅            |
+| [清单与裁剪](manual/catalog-and-expose.zh-CN.md)     | [Catalog & expose](manual/catalog-and-expose.md) | 协议清单与 Expose 过滤       |
+| [编写 Ability](manual/writing-abilities.zh-CN.md) | [Writing abilities](manual/writing-abilities.md) | 编写 Ability            |
+| [架构概览](manual/architecture.zh-CN.md)            | [Architecture](manual/architecture.md)           | 公开架构说明                |
+| [生态插件](manual/ecosystem-plugins.zh-CN.md)       | [Ecosystem plugins](manual/ecosystem-plugins.md) | Claude Code Mod 与 DSH |
 
-## 状态
+---
 
-早期预览，API 与布局可能变化。原生 Agent 以 `apps/agent-test` 为参考，Web 参考应用为 `apps/web-agent`。
+## 项目状态
 
-**`external/` 为实验性**，作者体验定型前可能发生破坏性变更。
+LEAF 目前是**早期预览**：
 
-**路线图 — 多语言 Ability。** 当前以 Rust 为主；计划支持 Python、TypeScript 等语言的 Ability 编写与加载，使同一套 Gateway / Port / Expose 承载多语言能力平面。
+| 维度  | 说明                      |
+| --- | ----------------------- |
+| 方向  | 架构明确，API 与布局仍可能调整       |
+| 适用  | 评估设计、原型、参与贡献            |
+| 慎用  | 未锁定版本且未充分测试时，不宜用于关键生产路径 |
+
+**路线图**
+
+- 提供更多 AI 系统特性的原生支持
+- 完善 Ability SDK 与 Gateway client 的库形态
+- 增强协议端口与装配配置能力
+- 支持 Python、TypeScript 等多语言 Ability
+- 补全观测、鉴权与限流等治理能力
+- 提供更多可复用的 App 装配示例
+
+**参考应用**：`apps/agent-test`（Agent 回路）、`apps/web-agent`（Web）
+
+**`external/`** 为实验性目录，作者 SDK 与探针仍可能变更。
+
+---
+
+## 设计原则
+
+1. **能力协议无关** — Ability 保持协议中立
+2. **装配决定形态** — App 决定加载、暴露与绑定
+3. **调用收敛到 Gateway** — 统一入口与治理
+4. **业务逻辑在 Ability crate** — 运行时内核保持纯粹
+5. **生态适配在边缘** — 外部兼容逻辑独立接入
+6. **边界清晰优先** — 先稳定结构，再扩展功能
+
+---
 
 ## 贡献
 
-1. 保持依赖单向（见 [architecture.zh-CN.md](manual/architecture.zh-CN.md)）
-2. 业务放在 Ability crate，不写入引擎
-3. 优先通过新 Ability 或 Port 扩展，避免特化 `Gateway`
+欢迎参与早期建设。贡献前请先阅读 [架构概览](manual/architecture.zh-CN.md) 与 [编写 Ability](manual/writing-abilities.zh-CN.md)。
 
-## 许可证
+**重点方向**
 
-本项目采用 [Apache License 2.0](LICENSE)。
+- Ability 示例与最佳实践
+- 协议适配器
+- 装配配置与治理策略
+- 测试、文档与基准
+- 多语言 Ability 支持
+
+如果你正在构建多协议 AI 能力层，或对「能力运行时」有不同判断，欢迎开 Issue 讨论架构取舍。项目更关心**边界清晰**、**治理收敛**与**场景可验证性**。
+
+---
+
+## License
+
+以仓库中的 [LICENSE](LICENSE) 文件为准（Apache License 2.0）。
