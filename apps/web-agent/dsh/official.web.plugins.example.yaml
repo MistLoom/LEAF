@@ -1,4 +1,4 @@
-# 清单示例：plugin-compat 的 token-weather fixture（路径相对本文件）
+# 清单示例：本应用 tests/fixtures/token-weather（路径相对本文件）
 claude_mod:
-  - path: ../../plugin-compat/tests/fixtures/token-weather
+  - path: ../tests/fixtures/token-weather
 dsh: []

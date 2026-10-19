@@ -42,7 +42,7 @@ function Invoke-Step {
     $results.Add([pscustomobject]@{ Name = $Name; Status = $status; Code = $code; Ok = $ok; Body = $body })
 }
 
-$sections.Add('# leafEX real config and third-party access test')
+$sections.Add('# LEAF real config and third-party access test')
 $sections.Add('')
 $sections.Add("- time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss K')")
 $sections.Add("- config: ``$cfgRel``")
@@ -51,15 +51,9 @@ $sections.Add("- third_party: ``external/showcase``")
 $sections.Add('')
 if (-not (Test-Path $cfg)) { throw "config missing: $cfg" }
 
-Invoke-Step -Name '1. build apps-runtime' -WorkDir $root -CmdDisplay 'cargo build -p apps-runtime' -Action { cargo build -p apps-runtime }
-Invoke-Step -Name '2. build ability CLIs' -WorkDir $root -CmdDisplay 'cargo run -q -p apps-runtime --bin tool-bin -- build' -Action { cargo run -q -p apps-runtime --bin tool-bin -- build }
-Invoke-Step -Name '3. build third-party showcase' -WorkDir $showcase -CmdDisplay 'cargo build' -Action { cargo build }
-Invoke-Step -Name '4. CLI catalog list with real expose' -WorkDir $root -CmdDisplay "cargo run -q -p apps-runtime -- --config $cfgRel catalog list" -Action { cargo run -q -p apps-runtime -- --config $cfgRel catalog list }
-
-# Windows PowerShell: keep JSON quotes via backslash escapes inside single quotes
-Invoke-Step -Name '5. CLI invoke read_file (allowed)' -WorkDir $root -CmdDisplay 'cargo run -q -p apps-runtime -- --config ... invoke read_file --args {\"path\":\"README.md\"}' -Action { cargo run -q -p apps-runtime -- --config $cfgRel invoke read_file --args '{\"path\":\"README.md\"}' }
-
-Invoke-Step -Name '6. third-party showcase full run' -WorkDir $showcase -CmdDisplay 'cargo run --quiet' -Action { cargo run --quiet }
+Invoke-Step -Name '1. build web-agent' -WorkDir $root -CmdDisplay 'cargo build -p web-agent' -Action { cargo build -p web-agent }
+Invoke-Step -Name '2. build third-party showcase' -WorkDir $showcase -CmdDisplay 'cargo build' -Action { cargo build }
+Invoke-Step -Name '3. third-party showcase full run' -WorkDir $showcase -CmdDisplay 'cargo run --quiet' -Action { cargo run --quiet }
 
 $pass = @($results | Where-Object { $_.Ok }).Count
 $fail = @($results | Where-Object { -not $_.Ok }).Count

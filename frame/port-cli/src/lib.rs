@@ -11,7 +11,7 @@ use frame_core::{
 use serde_json::Value;
 
 #[derive(Debug, Parser)]
-#[command(name = "runtime", about = "leafEX 运行时")]
+#[command(name = "runtime", about = "LEAF 运行时")]
 pub struct Cli {
     #[arg(long, global = true)]
     pub config: Option<String>,

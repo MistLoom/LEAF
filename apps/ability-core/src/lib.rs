@@ -9,5 +9,5 @@ mod proc;
 mod scope;
 
 pub use event_bus::{ChannelListener, EventBus};
-pub use host::AbilityHost;
+pub use host::{AbilityGrant, AbilityHost};
 pub use proc::{connect, ProcProvider, ProcSupervisor};

@@ -10,7 +10,7 @@ use web_agent::{
 };
 
 #[derive(Parser)]
-#[command(name = "web-agent", about = "leafEX Web 编码代理（生态 Ability 标杆）")]
+#[command(name = "web-agent", about = "LEAF Web 编码代理参考应用")]
 struct Cli {
     #[arg(long, global = true, help = "装配 YAML")]
     assembly: Option<PathBuf>,

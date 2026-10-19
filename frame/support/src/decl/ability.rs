@@ -96,6 +96,9 @@ pub struct AbilityDecl {
     /// 声明 schema 版本，须与 [`FRAMEWORK_VERSION`] 一致。
     pub framework_version: String,
     pub id: String,
+    /// 其他应用可否调用。默认仅属主应用可调用。
+    #[serde(default)]
+    pub open: bool,
     #[serde(default)]
     pub depends: Vec<DepDecl>,
     #[serde(default)]

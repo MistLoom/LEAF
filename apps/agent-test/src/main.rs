@@ -12,7 +12,7 @@ use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
-#[command(name = "agent-test", about = "leafEX Agent Test 应用")]
+#[command(name = "agent-test", about = "LEAF Agent Test 应用")]
 struct Cli {
     #[arg(long, global = true)]
     expose: Option<PathBuf>,

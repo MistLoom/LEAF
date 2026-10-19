@@ -26,6 +26,10 @@ pub fn ability_path(rel_root: &str) -> PathBuf {
 #[derive(Clone, Debug)]
 pub struct SourceEntry {
     pub id: String,
+    /// 属主应用，取自 `apps/<app>/ability`。
+    pub app: String,
+    /// 其他应用可否调用。
+    pub open: bool,
     pub rel_root: String,
     pub root: PathBuf,
     /// 当前二进制是否链入了 Provider。
@@ -39,7 +43,7 @@ pub struct WorkspaceCatalog {
 }
 
 impl WorkspaceCatalog {
-    /// 扫描 `ability/*/ability.yml` 并标记 linked 状态。
+    /// 扫描 `common/ability` 与 `apps/*/ability`，并标记 linked 状态。
     pub fn discover() -> Self {
         let ws = workspace_root();
         let linked: BTreeSet<String> = crate::registry::linked_ids().into_iter().map(String::from).collect();
@@ -62,8 +66,11 @@ impl WorkspaceCatalog {
                 continue;
             };
             let id = pkg.decl.id.clone();
+            let app = owner_app(&rel);
             sources.push(SourceEntry {
                 id: id.clone(),
+                app,
+                open: pkg.decl.open,
                 rel_root: rel,
                 root: root.clone(),
                 linked: linked.contains(&id),
@@ -100,6 +107,16 @@ impl WorkspaceCatalog {
                     .unwrap_or(false)
             })
             .collect()
+    }
+}
+
+/// `common/ability/...` 归属 `common`；`apps/<app>/ability/...` 归属该应用。
+pub fn owner_app(rel: &str) -> String {
+    let mut parts = rel.split('/');
+    match parts.next() {
+        Some("common") => "common".into(),
+        Some("apps") => parts.next().unwrap_or("").into(),
+        _ => String::new(),
     }
 }
 

@@ -28,7 +28,7 @@ test("hooks.json 含 modules 时拒绝加载", async () => {
 test("hooks_command fixture 可通过门禁", () => {
   const fixture = path.resolve(
     hostRoot,
-    "../plugin-compat/tests/fixtures/token-weather",
+    "../web-agent/tests/fixtures/token-weather",
   );
   assert.equal(claudeModAdmissionError(fixture), null);
 });

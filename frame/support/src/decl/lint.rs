@@ -94,13 +94,27 @@ pub fn lint_ability_package(meta: &AbilityPackageMeta, opts: &LintOptions) -> Li
     }
 }
 
-/// 发现 workspace 下全部能力根目录（`ability/*/ability.yml`）。
+/// 发现 workspace 下全部能力根目录。
+///
+/// - `common/ability/<name>/ability.yml`：通用能力
+/// - `apps/<app>/ability/<name>/ability.yml`：场景应用自有能力
 pub fn discover_ability_roots(workspace: &Path) -> Vec<PathBuf> {
-    let ability_dir = workspace.join("ability");
-    let Ok(entries) = fs::read_dir(&ability_dir) else {
-        return Vec::new();
-    };
     let mut roots = Vec::new();
+    collect_ability_roots(&workspace.join("common").join("ability"), workspace, &mut roots);
+    let apps_dir = workspace.join("apps");
+    if let Ok(apps) = fs::read_dir(&apps_dir) {
+        for app in apps.flatten() {
+            collect_ability_roots(&app.path().join("ability"), workspace, &mut roots);
+        }
+    }
+    roots.sort();
+    roots
+}
+
+fn collect_ability_roots(ability_dir: &Path, workspace: &Path, roots: &mut Vec<PathBuf>) {
+    let Ok(entries) = fs::read_dir(ability_dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         if !path.is_dir() {
@@ -118,8 +132,6 @@ pub fn discover_ability_roots(workspace: &Path) -> Vec<PathBuf> {
             roots.push(path);
         }
     }
-    roots.sort();
-    roots
 }
 
 /// 加载并校验 workspace 内全部能力声明。
@@ -130,7 +142,7 @@ pub fn lint_workspace(
     let roots = discover_ability_roots(workspace);
     if roots.is_empty() {
         return Err(format!(
-            "未在 {} 下发现 ability/*/ability.yml",
+            "未在 {} 下发现 common/ability 或 apps/*/ability",
             workspace.display()
         ));
     }

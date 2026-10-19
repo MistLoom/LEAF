@@ -5,7 +5,8 @@ English · [中文](writing-abilities.zh-CN.md)
 ## Package layout
 
 ```
-ability/<name>/
+common/ability/<name>/       # shared across apps
+apps/<app>/ability/<name>/   # owned by that app
   ability.yml
   build.rs
   src/
@@ -40,12 +41,17 @@ methods:
 
 Keep `framework_version` aligned with the framework. Protocol `info.yml` files, when present, must match.
 
+## Visibility
+
+`open` defaults to false: only the owning app may call the Ability. Set `open: true` when other apps may call it. Event intercept stays with the owner. Other apps may listen to an open Ability through `AppControl`.
+
 ## Cross-ability calls
 
 Depend on the peer **client** contract only:
 
 ```rust
-use EchoExt;
+use ability_echo::EchoExt;
+
 ctx.echo().run(args).await?;
 ```
 

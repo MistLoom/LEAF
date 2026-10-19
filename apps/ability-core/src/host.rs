@@ -7,9 +7,9 @@ use std::sync::{Arc, Mutex as StdMutex, RwLock as StdRwLock};
 use async_trait::async_trait;
 use ability_support::{
     host_event, method_catalog, Ability, AbilityEvent, AbilityId, AbilityProvider, Aspect,
-    CatalogEntry, ChainStatus, DiscoveryPayload, Error, EventDir, EventUnreg, FeedbackScope,
-    HostEvent, InstanceId, InvokeMask, Lifecycle, LoadSpec, LocalsScope, MethodId, ProtocolKind,
-    Result, SourceId, UserEvent,
+    CatalogEntry, ChainStatus, DiscoveryPayload, Error, EventDir, EventFilter, EventMode, EventUnreg,
+    FeedbackScope, HostEvent, InstanceId, InvokeMask, Lifecycle, LoadSpec, LocalsScope, MethodId,
+    ProtocolKind, Result, SourceId, UserEvent,
 };
 use frame_core::{AbilityExpose, AccessKind, Gateway, InvokeRequest, InvokeResponse};
 use serde_json::Value;
@@ -66,10 +66,20 @@ pub(crate) struct InstanceSlot {
     inflight: Arc<Inflight>,
 }
 
+/// 能力对应用的归属与开放标记。
+#[derive(Clone, Debug)]
+pub struct AbilityGrant {
+    pub app: String,
+    pub open: bool,
+}
+
 pub(crate) struct HostInner {
     pub sources: StdRwLock<HashMap<SourceId, Arc<dyn AbilityProvider>>>,
     pub instances: StdRwLock<HashMap<InstanceId, InstanceSlot>>,
     pub events: EventBus,
+    /// ability id / instance id → 归属。
+    pub grants: StdRwLock<HashMap<String, AbilityGrant>>,
+    pub entry_app: StdRwLock<Option<String>>,
     pub expose: StdRwLock<AbilityExpose>,
     pub access_gate: StdRwLock<Option<AccessKind>>,
     /// 实例 → 已声明支持的协议（来自能力目录）。
@@ -87,6 +97,8 @@ impl HostInner {
             sources: StdRwLock::new(HashMap::new()),
             instances: StdRwLock::new(HashMap::new()),
             events: EventBus::new(),
+            grants: StdRwLock::new(HashMap::new()),
+            entry_app: StdRwLock::new(None),
             expose: StdRwLock::new(AbilityExpose::open_all()),
             access_gate: StdRwLock::new(None),
             protocol_support: StdRwLock::new(HashMap::new()),
@@ -96,6 +108,86 @@ impl HostInner {
             event_ids: StdMutex::new(HashMap::new()),
             load_lock: Mutex::new(()),
         }
+    }
+
+    fn copy_grant(&self, ability_id: &str, instance_id: &str) {
+        let mut grants = self.grants.write().expect("grants");
+        if let Some(grant) = grants.get(ability_id).cloned() {
+            grants.insert(instance_id.to_string(), grant);
+        }
+    }
+
+    fn grant(&self, id: &str) -> Option<AbilityGrant> {
+        self.grants.read().expect("grants").get(id).cloned()
+    }
+
+    fn entry_app(&self) -> Option<String> {
+        self.entry_app.read().expect("entry_app").clone()
+    }
+
+    pub(crate) fn authorize_port(&self, target: &str) -> Result<()> {
+        let Some(grant) = self.grant(target) else {
+            return Ok(());
+        };
+        if grant.open {
+            return Ok(());
+        }
+        match self.entry_app() {
+            Some(app) if app == grant.app => Ok(()),
+            _ => Err(Error::unavailable(format!(
+                "能力 {target} 归属应用 {}，未开放",
+                grant.app
+            ))),
+        }
+    }
+
+    pub(crate) fn authorize_call(&self, caller: &str, target: &str) -> Result<()> {
+        let Some(target_grant) = self.grant(target) else {
+            return Ok(());
+        };
+        if target_grant.open {
+            return Ok(());
+        }
+        let caller_app = self.grant(caller).map(|g| g.app).or_else(|| self.entry_app());
+        match caller_app {
+            Some(app) if app == target_grant.app => Ok(()),
+            _ => Err(Error::unavailable(format!(
+                "能力 {target} 归属应用 {}，未开放",
+                target_grant.app
+            ))),
+        }
+    }
+
+    pub(crate) fn authorize_event(
+        &self,
+        caller: &str,
+        filter: &EventFilter,
+        mode: EventMode,
+    ) -> Result<()> {
+        let Some(caller_grant) = self.grant(caller) else {
+            return Ok(());
+        };
+        let Some(inst) = filter.instance.as_ref() else {
+            if matches!(mode, EventMode::Middleware | EventMode::Pipeline) {
+                return Err(Error::unavailable("拦截须指定本应用的能力实例"));
+            }
+            return Ok(());
+        };
+        let Some(target) = self.grant(inst.as_str()) else {
+            return Ok(());
+        };
+        let intercept = matches!(mode, EventMode::Middleware | EventMode::Pipeline);
+        if target.app == "common" || caller_grant.app == target.app {
+            return Ok(());
+        }
+        if !intercept && target.open {
+            return Ok(());
+        }
+        let verb = if intercept { "拦截" } else { "监听" };
+        Err(Error::unavailable(format!(
+            "应用 {} 不能{verb}能力 {}",
+            caller_grant.app, inst
+        )))
     }
 
     pub fn lookup_chain(&self, chain_id: &str) -> Option<ChainStatus> {
@@ -444,6 +536,7 @@ impl HostInner {
                 },
             );
         }
+        self.copy_grant(manifest.id.as_str(), spec.as_name.as_str());
         self.emit_lifecycle(&spec.as_name, Lifecycle::Loaded).await;
 
         self.set_phase(&spec.as_name, Lifecycle::Bound);
@@ -735,6 +828,41 @@ impl AbilityHost {
     }
 
     /// 登记实例支持的协议（由组合根在 load 前注入）。
+    pub fn set_entry_app(&self, app: impl Into<String>) {
+        *self.inner.entry_app.write().expect("entry_app") = Some(app.into());
+    }
+
+    pub fn entry_app(&self) -> Option<String> {
+        self.inner.entry_app.read().expect("entry_app").clone()
+    }
+
+    pub fn set_ability_grant(&self, id: &str, grant: AbilityGrant) {
+        self.inner
+            .grants
+            .write()
+            .expect("grants")
+            .insert(id.to_string(), grant);
+    }
+
+    pub fn grant(&self, id: &str) -> Option<AbilityGrant> {
+        self.inner.grants.read().expect("grants").get(id).cloned()
+    }
+
+    /// 端口调用：未登记归属则放行；已登记时，属主或 `open` 放行。
+    pub fn authorize_port(&self, target: &str) -> Result<()> {
+        self.inner.authorize_port(target)
+    }
+
+    /// 能力间调用：目标未登记则放行；否则须同应用或目标 `open`。
+    pub fn authorize_call(&self, caller: &str, target: &str) -> Result<()> {
+        self.inner.authorize_call(caller, target)
+    }
+
+    /// 事件控制：拦截仅属主；监听允许属主，或目标 `open`。
+    pub fn authorize_event(&self, caller: &str, filter: &EventFilter, mode: EventMode) -> Result<()> {
+        self.inner.authorize_event(caller, filter, mode)
+    }
+
     pub fn set_protocol_support(&self, instance: &str, kinds: Vec<AccessKind>) {
         self.inner
             .protocol_support
@@ -781,6 +909,7 @@ impl AbilityHost {
 #[async_trait]
 impl Gateway for AbilityHost {
     async fn invoke(&self, request: InvokeRequest) -> Result<InvokeResponse> {
+        self.authorize_port(request.instance.as_str())?;
         if let Some(gate) = *self.inner.access_gate.read().expect("gate") {
             if !self.allows_protocol(request.instance.as_str(), gate) {
                 return Err(Error::unavailable(format!(

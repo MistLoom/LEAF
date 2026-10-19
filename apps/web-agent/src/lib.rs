@@ -1,4 +1,6 @@
-//! Web 编码代理参考应用（生态 Ability 标杆装配）。
+//! Web 编码代理参考应用。
+//!
+//! 文件、shell、Agent 回路与生态插件来自 `common` 与 `agent-test` 的开放能力。
 
 mod assembly;
 mod driver;

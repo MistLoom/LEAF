@@ -1,10 +1,10 @@
-# 外部项目：以第三方身份接入 leafEX（不属于 leafEX workspace）
+# 外部项目：以第三方身份接入 LEAF（不属于 LEAF workspace）
 [package]
 name = "showcase"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
-description = "外部接入示例：演示如何访问 leafEX 已开放能力"
+description = "外部接入示例：演示如何访问 LEAF 已开放能力"
 publish = false
 
 [[bin]]

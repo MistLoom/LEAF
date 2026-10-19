@@ -4,6 +4,8 @@ English · [中文](catalog-and-expose.zh-CN.md)
 
 Applications under `apps/` assemble Abilities in three steps: discover sources, decide which instances to load (`AbilityExpose`), then open Ports on the resulting `Gateway`.
 
+Discovery reads `common/ability/*/ability.yml` and `apps/<app>/ability/*/ability.yml`. `common` Abilities are shared: the entry app may call, listen, and intercept them. Each source records its owning app and `open`. Set the process entry app with `AppBuilder::app` or `ComposeOptions::app`. A call into another app requires `open: true`. Listen and intercept go through `AppHandle::control`.
+
 ## Protocol declaration
 
 Each Ability package declares supported protocols in `ability.yml`. Protocol directories (`mcp/`, `cli/`, `tools/`, …) hold projection metadata when required.
@@ -120,7 +122,7 @@ let app = AppBuilder::new()
     .catalog(catalog)
     .expose(expose)
     .bootstrap()
-    .await?;
+    .await;
 ```
 
 After bootstrap, Ports apply an access gate: only loaded instances that registered the Port’s protocol remain visible on that surface.

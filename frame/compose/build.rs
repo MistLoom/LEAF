@@ -12,39 +12,22 @@ fn main() {
         .join("../..")
         .canonicalize()
         .unwrap_or_else(|_| manifest_dir.join("../.."));
-    let ability_dir = workspace.join("ability");
     let out_dir_str = std::env::var("OUT_DIR").unwrap();
     let out_dir = Path::new(&out_dir_str);
     let generated_path = out_dir.join("providers.rs");
 
     let mut entries: Vec<(String, String, String)> = Vec::new();
-    let Ok(read) = fs::read_dir(&ability_dir) else {
-        fs::write(&generated_path, "// no ability dir\n").unwrap();
-        return;
-    };
-
-    for entry in read.flatten() {
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
+    scan_ability_dir(&workspace.join("common").join("ability"), "common/ability", &mut entries);
+    let apps_dir = workspace.join("apps");
+    if let Ok(apps) = fs::read_dir(&apps_dir) {
+        for app_entry in apps.flatten() {
+            let app_path = app_entry.path();
+            let Some(app) = app_path.file_name().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            let rel_parent = format!("apps/{app}/ability");
+            scan_ability_dir(&app_path.join("ability"), &rel_parent, &mut entries);
         }
-        let folder = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-        if EXCLUDE.contains(&folder) {
-            continue;
-        }
-        let yml_path = path.join("ability.yml");
-        if !yml_path.is_file() {
-            continue;
-        }
-        let toml_path = path.join("Cargo.toml");
-        if !toml_path.is_file() {
-            continue;
-        }
-        let yml = fs::read_to_string(&yml_path).unwrap_or_default();
-        let id = parse_yaml_id(&yml).unwrap_or_else(|| folder.replace('_', "."));
-        let pkg = parse_package_name(&toml_path).unwrap_or_else(|| folder.replace('_', "-"));
-        let rel = format!("ability/{folder}");
-        entries.push((id, rel, pkg));
     }
 
     entries.sort_by(|a, b| a.0.cmp(&b.0));
@@ -81,7 +64,40 @@ fn main() {
     code.push_str("    ]\n}\n");
 
     fs::write(&generated_path, code).unwrap();
+    println!("cargo:rerun-if-changed={}", apps_dir.display());
+}
+
+fn scan_ability_dir(ability_dir: &Path, rel_parent: &str, entries: &mut Vec<(String, String, String)>) {
+    if !ability_dir.is_dir() {
+        return;
+    }
     println!("cargo:rerun-if-changed={}", ability_dir.display());
+    let Ok(read) = fs::read_dir(ability_dir) else {
+        return;
+    };
+    for entry in read.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let folder = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+        if EXCLUDE.contains(&folder) {
+            continue;
+        }
+        let yml_path = path.join("ability.yml");
+        if !yml_path.is_file() {
+            continue;
+        }
+        let toml_path = path.join("Cargo.toml");
+        if !toml_path.is_file() {
+            continue;
+        }
+        println!("cargo:rerun-if-changed={}", yml_path.display());
+        let yml = fs::read_to_string(&yml_path).unwrap_or_default();
+        let id = parse_yaml_id(&yml).unwrap_or_else(|| folder.replace('_', "."));
+        let pkg = parse_package_name(&toml_path).unwrap_or_else(|| folder.replace('_', "-"));
+        entries.push((id, format!("{rel_parent}/{folder}"), pkg));
+    }
 }
 
 fn parse_yaml_id(yml: &str) -> Option<String> {

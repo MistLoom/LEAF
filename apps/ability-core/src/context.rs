@@ -117,6 +117,8 @@ impl AbilityCtx for InvokeContext {
             )));
         }
         self.host
+            .authorize_call(self.instance.as_str(), target.as_str())?;
+        self.host
             .invoke_internal(
                 &target,
                 method,
@@ -156,6 +158,8 @@ impl AbilityCtx for InvokeContext {
     }
 
     async fn subscribe(&self, filter: EventFilter) -> Result<Box<dyn EventListener + Send>> {
+        self.host
+            .authorize_event(self.instance.as_str(), &filter, ability_support::EventMode::Message)?;
         let listener = self.host.events.listen(filter).await;
         self.host.bind_event_id(&self.instance, listener.id());
         Ok(Box::new(listener))
@@ -167,6 +171,8 @@ impl AbilityCtx for InvokeContext {
         handler: EventHandler,
         opts: EventOpts,
     ) -> Result<EventReg> {
+        self.host
+            .authorize_event(self.instance.as_str(), &filter, handler.mode())?;
         let reg = self.host.events.handle(filter, handler, opts);
         self.host.bind_event_id(&self.instance, reg.id());
         Ok(reg)

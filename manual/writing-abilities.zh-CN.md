@@ -5,7 +5,8 @@
 ## 包布局
 
 ```
-ability/<name>/
+common/ability/<name>/       # 通用
+apps/<app>/ability/<name>/   # 归属该应用
   ability.yml
   build.rs
   src/
@@ -40,12 +41,17 @@ methods:
 
 `framework_version` 须与框架一致；存在协议 `info.yml` 时版本需对齐。
 
+## 可见性
+
+`open` 默认为 false，仅属主应用可调用。其他应用需要调用时设 `open: true`。事件拦截属于属主应用。其他应用可以通过 `AppControl` 监听已开放的 Ability。
+
 ## 跨能力调用
 
 只依赖对方的 **client** 契约：
 
 ```rust
-use EchoExt;
+use ability_echo::EchoExt;
+
 ctx.echo().run(args).await?;
 ```
 

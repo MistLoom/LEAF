@@ -36,11 +36,15 @@ impl EventListener for ChannelListener {
 
 struct FilterSink {
     tx: mpsc::UnboundedSender<BusEvent>,
+    allow: Arc<dyn Fn(&BusEvent) -> bool + Send + Sync>,
 }
 
 #[async_trait]
 impl EventSink for FilterSink {
     async fn on_event(&self, event: &BusEvent) {
+        if !(self.allow)(event) {
+            return;
+        }
         let _ = self.tx.send(event.clone());
     }
 }
@@ -183,10 +187,19 @@ impl EventBus {
     }
 
     pub async fn listen(&self, filter: EventFilter) -> ChannelListener {
+        self.listen_where(filter, Arc::new(|_: &BusEvent| true)).await
+    }
+
+    /// 与 [`listen`] 相同，额外丢弃 `allow` 为假的事件。
+    pub async fn listen_where(
+        &self,
+        filter: EventFilter,
+        allow: Arc<dyn Fn(&BusEvent) -> bool + Send + Sync>,
+    ) -> ChannelListener {
         let (tx, rx) = mpsc::unbounded_channel();
         let reg = self.handle(
             filter,
-            EventHandler::Message(Arc::new(FilterSink { tx })),
+            EventHandler::Message(Arc::new(FilterSink { tx, allow })),
             EventOpts::default(),
         );
         ChannelListener { rx, _reg: reg }

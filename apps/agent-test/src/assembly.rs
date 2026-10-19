@@ -17,7 +17,11 @@ pub async fn bootstrap(
     let provider = load_provider(provider_path)?;
     let expose = merge_chat_config(load_expose(expose_path)?, provider);
 
-    Ok(AppBuilder::new().expose(expose).bootstrap().await)
+    Ok(AppBuilder::new()
+        .app("agent-test")
+        .expose(expose)
+        .bootstrap()
+        .await)
 }
 
 /// WebUI 模式：默认加载 web expose（禁 `bash`）。

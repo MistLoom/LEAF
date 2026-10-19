@@ -1,5 +1,6 @@
 //! 组合根：Catalog、Bootstrap、Expose、装配与可选 Mgmt API。
 
+pub mod app_control;
 pub mod bootstrap;
 pub mod host_lifecycle;
 pub mod catalog;
@@ -11,6 +12,7 @@ pub mod load_order;
 pub mod protocol_registry;
 mod registry;
 
+pub use app_control::AppControl;
 pub use bootstrap::{AppBuilder, AppHandle};
 pub use host_lifecycle::{
     apply_registrations, filter_host_all, filter_host_invoke, filter_host_lifecycle,
@@ -23,8 +25,8 @@ pub use catalog::{
 };
 pub use cli_build::build_clis;
 pub use compose::{
-    access_allowed, apply_expose_delta, build_gateway, build_gateway_with, install_providers,
-    load_exposed, reload_one, ComposeArtifact, ComposeOptions, LoadOpts,
+    access_allowed, apply_expose_delta, bind_app_scope, build_gateway, build_gateway_with,
+    install_providers, load_exposed, reload_one, ComposeArtifact, ComposeOptions, LoadOpts,
 };
 pub use config::ConfigCatalog;
 pub use expose::ToolHost;

@@ -4,32 +4,32 @@ members = [
     "frame/support/macros",
     "frame/support",
     "frame/protocol",
-    "ability/config",
-    "ability/store",
-    "ability/store_persist",
-    "ability/store_temp",
-    "ability/markdown",
-    "ability/read_file",
-    "ability/write_file",
-    "ability/bash",
-    "ability/todo_write",
-    "ability/echo",
-    "ability/counter",
-    "ability/shout",
-    "ability/kb",
-    "ability/task",
-    "ability/skill",
-    "ability/prompt",
-    "ability/dispatch",
-    "ability/chat",
-    "ability/turn",
-    "ability/session",
-    "ability/plugin_host",
-    "ability/claude_mod",
-    "ability/dsh_plugin",
-    "ability/test_feedback",
-    "ability/devkit",
-    "ability/codegen_fixture",
+    "common/ability/config",
+    "common/ability/store",
+    "common/ability/store_persist",
+    "common/ability/store_temp",
+    "common/ability/markdown",
+    "common/ability/read_file",
+    "common/ability/write_file",
+    "common/ability/bash",
+    "common/ability/todo_write",
+    "common/ability/echo",
+    "common/ability/counter",
+    "common/ability/shout",
+    "common/ability/kb",
+    "common/ability/task",
+    "common/ability/devkit",
+    "common/ability/codegen_fixture",
+    "common/ability/test_feedback",
+    "apps/agent-test/ability/skill",
+    "apps/agent-test/ability/prompt",
+    "apps/agent-test/ability/dispatch",
+    "apps/agent-test/ability/chat",
+    "apps/agent-test/ability/turn",
+    "apps/agent-test/ability/session",
+    "common/ability/plugin_host",
+    "common/ability/claude_mod",
+    "common/ability/dsh_plugin",
     "frame/core",
     "frame/port-cli",
     "frame/port-http",
@@ -38,13 +38,10 @@ members = [
     "frame/port-grpc",
     "frame/compose",
     "apps/ability-core",
-    "apps/runtime",
-    "apps/admin",
     "apps/agent-test",
     "apps/web-agent",
-    "apps/plugin-compat",
 ]
-default-members = ["apps/runtime"]
+default-members = ["apps/web-agent"]
 
 exclude = ["external/showcase", "external/ability-probe", "external/ability-sdk", "external/ability-sdk-codegen"]
 
@@ -66,32 +63,32 @@ frame-port-mcp = { path = "frame/port-mcp" }
 frame-port-fun = { path = "frame/port-fun" }
 frame-port-grpc = { path = "frame/port-grpc" }
 ability-sdk-codegen = { path = "external/ability-sdk-codegen" }
-ability-config = { path = "ability/config" }
-ability-store = { path = "ability/store" }
-ability-store-persist = { path = "ability/store_persist" }
-ability-store-temp = { path = "ability/store_temp" }
-ability-markdown = { path = "ability/markdown" }
-ability-read-file = { path = "ability/read_file" }
-ability-write-file = { path = "ability/write_file" }
-ability-bash = { path = "ability/bash" }
-ability-todo-write = { path = "ability/todo_write" }
-ability-echo = { path = "ability/echo" }
-ability-counter = { path = "ability/counter" }
-ability-shout = { path = "ability/shout" }
-ability-kb = { path = "ability/kb" }
-ability-task = { path = "ability/task" }
-ability-devkit = { path = "ability/devkit" }
-ability-codegen-fixture = { path = "ability/codegen_fixture" }
+ability-config = { path = "common/ability/config" }
+ability-store = { path = "common/ability/store" }
+ability-store-persist = { path = "common/ability/store_persist" }
+ability-store-temp = { path = "common/ability/store_temp" }
+ability-markdown = { path = "common/ability/markdown" }
+ability-read-file = { path = "common/ability/read_file" }
+ability-write-file = { path = "common/ability/write_file" }
+ability-bash = { path = "common/ability/bash" }
+ability-todo-write = { path = "common/ability/todo_write" }
+ability-echo = { path = "common/ability/echo" }
+ability-counter = { path = "common/ability/counter" }
+ability-shout = { path = "common/ability/shout" }
+ability-kb = { path = "common/ability/kb" }
+ability-task = { path = "common/ability/task" }
+ability-devkit = { path = "common/ability/devkit" }
+ability-codegen-fixture = { path = "common/ability/codegen_fixture" }
 ai-protocol = { path = "frame/protocol" }
-ai-skill = { path = "ability/skill" }
-ai-prompt = { path = "ability/prompt" }
-ai-dispatch = { path = "ability/dispatch" }
-ai-chat = { path = "ability/chat" }
-ai-turn = { path = "ability/turn" }
-ai-session = { path = "ability/session" }
-ability-plugin-host = { path = "ability/plugin_host" }
-ability-claude-mod = { path = "ability/claude_mod" }
-ability-dsh-plugin = { path = "ability/dsh_plugin" }
+ai-skill = { path = "apps/agent-test/ability/skill" }
+ai-prompt = { path = "apps/agent-test/ability/prompt" }
+ai-dispatch = { path = "apps/agent-test/ability/dispatch" }
+ai-chat = { path = "apps/agent-test/ability/chat" }
+ai-turn = { path = "apps/agent-test/ability/turn" }
+ai-session = { path = "apps/agent-test/ability/session" }
+ability-plugin-host = { path = "common/ability/plugin_host" }
+ability-claude-mod = { path = "common/ability/claude_mod" }
+ability-dsh-plugin = { path = "common/ability/dsh_plugin" }
 sha2 = "0.10"
 encoding_rs = "0.8"
 

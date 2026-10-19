@@ -57,14 +57,22 @@ pub async fn bootstrap_with_options(
         expose = merge_chat_provider(expose, provider_val);
     }
     ability_plugin_host::coordinator().reset().await;
-    let app = AppBuilder::new().expose(expose).bootstrap().await;
+    let app = AppBuilder::new()
+        .app("web-agent")
+        .expose(expose)
+        .bootstrap()
+        .await;
     install_eco_user_fanout(&app.host);
     Ok(WebBoot { app })
 }
 
 pub async fn bootstrap_expose(expose: AbilityExpose) -> Result<WebBoot> {
     ability_plugin_host::coordinator().reset().await;
-    let app = AppBuilder::new().expose(expose).bootstrap().await;
+    let app = AppBuilder::new()
+        .app("web-agent")
+        .expose(expose)
+        .bootstrap()
+        .await;
     install_eco_user_fanout(&app.host);
     Ok(WebBoot { app })
 }

@@ -10,9 +10,11 @@ use ability_support::{
 use frame_core::{AbilityExpose, Gateway};
 use serde_json::{json, Value};
 
+use crate::app_control::AppControl;
 use crate::catalog::WorkspaceCatalog;
 use crate::compose::{
-    apply_expose_delta, install_providers, load_exposed, reload_one, ComposeOptions, LoadOpts,
+    apply_expose_delta, bind_app_scope, install_providers, load_exposed, reload_one, ComposeOptions,
+    LoadOpts,
 };
 use crate::config::ConfigCatalog;
 use crate::expose::ToolHost;
@@ -29,7 +31,7 @@ pub struct AppHandle {
     pub config_path: Option<std::path::PathBuf>,
     pub invoke_log: Arc<RwLock<Vec<Value>>>,
     /// 保持 Host 事件登记存活。
-    _host_event_regs: Vec<ability_support::EventReg>,
+    pub(crate) _host_event_regs: Vec<ability_support::EventReg>,
 }
 
 pub struct AppBuilder {
@@ -39,6 +41,7 @@ pub struct AppBuilder {
     registry: ProtocolRegistry,
     host_registrations: Vec<HostRegistration>,
     invoke_log: Option<Arc<RwLock<Vec<Value>>>>,
+    app: Option<String>,
 }
 
 impl Default for AppBuilder {
@@ -53,6 +56,7 @@ impl Default for AppBuilder {
             registry,
             host_registrations: Vec::new(),
             invoke_log: None,
+            app: None,
         }
     }
 }
@@ -71,6 +75,12 @@ impl AppBuilder {
 
     pub fn expose(mut self, expose: AbilityExpose) -> Self {
         self.expose = expose;
+        self
+    }
+
+    /// 本进程的入口应用。
+    pub fn app(mut self, app: impl Into<String>) -> Self {
+        self.app = Some(app.into());
         self
     }
 
@@ -122,6 +132,7 @@ impl AppBuilder {
         let host = AbilityHost::new();
         host.set_expose(self.expose.clone());
         crate::protocol_registry::sync_protocol_support(&host, &self.catalog);
+        bind_app_scope(&host, &self.catalog, self.app.as_deref());
         install_providers(&host).await;
 
         let invoke_log = self
@@ -165,6 +176,7 @@ impl AppBuilder {
             artifact: crate::compose::ComposeArtifact::Runtime,
             registry: self.registry,
             catalog: self.catalog,
+            app: self.app,
         }
     }
 }
@@ -195,6 +207,12 @@ impl EventSink for InvokeLogSink {
 }
 
 impl AppHandle {
+    /// 入口应用的事件控制面。
+    pub fn control(&self) -> AppControl {
+        let app = self.host.entry_app().unwrap_or_default();
+        AppControl::from_catalog(&app, &self.catalog, self.host.clone())
+    }
+
     pub async fn apply_expose_delta(&self, old: &AbilityExpose, new: &AbilityExpose) -> Result<(), ability_support::Error> {
         apply_expose_delta(&self.host, &self.catalog, old, new).await
     }

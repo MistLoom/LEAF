@@ -1,4 +1,4 @@
-//! Web 编排运行时。
+//! 已装配进程：Host、Gateway 与 Expose。
 
 use std::sync::Arc;
 

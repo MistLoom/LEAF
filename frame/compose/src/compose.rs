@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use ability_core::AbilityHost;
+use ability_core::{AbilityGrant, AbilityHost};
 use ability_support::{InstanceId, LoadSpec, SourceId};
 use frame_core::{AccessKind, AbilityExpose, Gateway, ProtocolController, ProtocolKind};
 
@@ -30,6 +30,8 @@ pub struct ComposeOptions {
     pub artifact: ComposeArtifact,
     pub registry: ProtocolRegistry,
     pub catalog: WorkspaceCatalog,
+    /// 本进程的入口应用。
+    pub app: Option<String>,
 }
 
 impl Default for ComposeOptions {
@@ -45,6 +47,7 @@ impl Default for ComposeOptions {
             artifact: ComposeArtifact::default(),
             registry,
             catalog,
+            app: None,
         }
     }
 }
@@ -63,6 +66,27 @@ impl ComposeOptions {
         self.host = self.host.override_controller(ctrl);
         self
     }
+
+    pub fn app(mut self, app: impl Into<String>) -> Self {
+        self.app = Some(app.into());
+        self
+    }
+}
+
+/// 把 Catalog 中的归属写入 Host，并记录入口应用。
+pub fn bind_app_scope(host: &AbilityHost, catalog: &WorkspaceCatalog, app: Option<&str>) {
+    if let Some(app) = app {
+        host.set_entry_app(app);
+    }
+    for source in catalog.sources() {
+        host.set_ability_grant(
+            &source.id,
+            AbilityGrant {
+                app: source.app.clone(),
+                open: source.open,
+            },
+        );
+    }
 }
 
 pub async fn build_gateway() -> Arc<dyn Gateway> {
@@ -78,6 +102,7 @@ pub async fn build_gateway_with(opts: ComposeOptions) -> Arc<dyn Gateway> {
     }
 
     sync_protocol_support(&host, &opts.catalog);
+    bind_app_scope(&host, &opts.catalog, opts.app.as_deref());
     registry::install_all(&host).await;
     load_exposed(&host, &opts.catalog, &expose, LoadOpts::default()).await;
 

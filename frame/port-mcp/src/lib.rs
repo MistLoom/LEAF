@@ -88,7 +88,7 @@ impl ServerHandler for McpGatewayHandler {
                 self.server_name.clone(),
                 self.server_version.clone(),
             ))
-            .with_instructions("leafEX ability gateway over MCP")
+            .with_instructions("LEAF ability gateway over MCP")
     }
 
     async fn list_tools(

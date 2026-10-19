@@ -12,11 +12,9 @@ fn manifest_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }
 
-/// `apps/plugin-compat` 中代表第三方 Mod 出站模式的 fixture。
+/// 第三方 Mod fixture，位于本应用 `tests/fixtures`。
 fn compat_mod_fixture(name: &str) -> PathBuf {
-    manifest_dir()
-        .join("../plugin-compat/tests/fixtures")
-        .join(name)
+    manifest_dir().join("tests/fixtures").join(name)
 }
 
 fn eco_dsh_tool_name(names: &[String], tool_tail: &str) -> Option<String> {

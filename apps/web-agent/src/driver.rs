@@ -1,4 +1,7 @@
-//! 驱动层：能力事件 → 用户通道 + SSE。
+//! 把宿主事件与能力事件转到 Web 通道。
+//!
+//! 用户事件与 Host 系统事件走引擎总线。能力事件经入口应用的 `AppControl`：
+//! 只收到本应用、`common` 以及已开放的他应用能力。
 
 use std::sync::Arc;
 
@@ -7,13 +10,14 @@ use ability_support::{
     host_event, AbilityEvent, BusEvent, EventClass, EventFilter, EventListener, InstanceId,
     UserEvent, UserEventSink,
 };
+use frame_compose::{AppControl, AppHandle};
 use serde_json::{json, Value};
 use tokio::sync::broadcast;
 
-pub fn spawn_driver(host: &AbilityHost, events_tx: broadcast::Sender<String>) {
-    spawn_user_sse(host, events_tx.clone());
-    spawn_host_pipeline(host.clone(), events_tx.clone());
-    spawn_ability_pipeline(host.clone(), events_tx);
+pub fn spawn_driver(app: &AppHandle, events_tx: broadcast::Sender<String>) {
+    spawn_user_sse(&app.host, events_tx.clone());
+    spawn_host_pipeline(app.host.clone(), events_tx.clone());
+    spawn_ability_pipeline(app.control(), app.host.clone(), events_tx);
 }
 
 fn spawn_user_sse(host: &AbilityHost, tx: broadcast::Sender<String>) {
@@ -70,17 +74,19 @@ fn spawn_host_pipeline(host: AbilityHost, tx: broadcast::Sender<String>) {
     });
 }
 
-fn spawn_ability_pipeline(host: AbilityHost, tx: broadcast::Sender<String>) {
+fn spawn_ability_pipeline(control: AppControl, host: AbilityHost, tx: broadcast::Sender<String>) {
     tokio::spawn(async move {
         let turn = InstanceId::new("turn").ok();
         let session = InstanceId::new("session").ok();
-        let mut listener = host
-            .events()
+        let Ok(mut listener) = control
             .listen(EventFilter {
                 class: Some(EventClass::Ability),
                 ..Default::default()
             })
-            .await;
+            .await
+        else {
+            return;
+        };
 
         while let Some(ev) = listener.next().await {
             let BusEvent::Ability(ab) = ev else {

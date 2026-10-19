@@ -10,7 +10,7 @@ use serde_json::json;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("========== leafEX Showcase ==========\n");
+    println!("========== LEAF Showcase ==========\n");
 
     let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../config/tool_expose.example.yaml");
@@ -77,11 +77,11 @@ async fn scenario_fun_echo_shout(
 ) -> Result<(), Box<dyn std::error::Error>> {
     banner("2 Fun invoke");
     let echo = fun
-        .invoke_str("algo.echo", json!({"text": "hello leafEX"}), None)
+        .invoke_str("algo.echo", json!({"text": "hello LEAF"}), None)
         .await?;
     println!("algo.echo => {}", serde_json::to_string(&echo.data)?);
     let shout = fun
-        .invoke_str("app.shout", json!({"text": "hello leafEX"}), None)
+        .invoke_str("app.shout", json!({"text": "hello LEAF"}), None)
         .await?;
     println!("app.shout => {}", serde_json::to_string(&shout.data)?);
     println!();
@@ -219,7 +219,7 @@ fn scenario_tool_bin_hint(expose: &AbilityExpose, ids: &[&str]) {
         println!("  {id}: tool_bin={has_bin}");
     }
     println!(
-        "  build: cargo run -p apps-runtime --bin tool-bin -- build"
+        "  doctor: cargo run -p web-agent -- doctor"
     );
     println!();
 }
