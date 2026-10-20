@@ -20,7 +20,5 @@ frame-compose = { path = "../../frame/compose", default-features = false, featur
     "ability-task",
     "port-fun",
 ] }
-frame-core = { path = "../../frame/core" }
-frame-port-fun = { path = "../../frame/port-fun" }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

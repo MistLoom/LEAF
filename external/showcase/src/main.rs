@@ -3,9 +3,10 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use frame_core::{AccessKind, AbilityExpose, ArtifactKind, LocalsScope};
 use frame_compose::compose::{access_allowed, build_fun_port_with, ComposeOptions};
-use frame_compose::{ConfigCatalog, ToolHost};
+use frame_compose::{
+    AccessKind, AbilityExpose, ConfigCatalog, FunPort, LocalsScope, ToolHost,
+};
 use serde_json::json;
 
 #[tokio::main]
@@ -38,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     scenario_terminal(&fun).await?;
     scenario_todo(&fun).await?;
     scenario_per_cap_access(&expose, &ids);
-    scenario_tool_bin_hint(&expose, &ids);
+    scenario_enabled_filter(&expose, &ids);
     scenario_filtered_denied(&fun).await?;
 
     println!("\n========== Showcase done ==========");
@@ -53,17 +54,12 @@ fn scenario_per_cap_summary(expose: &AbilityExpose) {
     banner("0 AbilityExpose per-instance");
     println!("unknown  = {:?}", expose.unknown);
     for (id, cap) in &expose.abilities {
-        println!(
-            "  {id}: enabled={:?} access={:?} artifacts={:?}",
-            cap.enabled, cap.access, cap.artifacts
-        );
+        println!("  {id}: enabled={:?} config={:?}", cap.enabled, cap.config);
     }
     println!();
 }
 
-async fn scenario_tool_list(
-    fun: &frame_port_fun::FunPort,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_tool_list(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("1 Fun catalog");
     for e in fun.catalog() {
         println!("  - {}.{}", e.instance, e.method);
@@ -72,9 +68,7 @@ async fn scenario_tool_list(
     Ok(())
 }
 
-async fn scenario_fun_echo_shout(
-    fun: &frame_port_fun::FunPort,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_fun_echo_shout(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("2 Fun invoke");
     let echo = fun
         .invoke_str("algo.echo", json!({"text": "hello LEAF"}), None)
@@ -88,9 +82,7 @@ async fn scenario_fun_echo_shout(
     Ok(())
 }
 
-async fn scenario_counter_session(
-    fun: &frame_port_fun::FunPort,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_counter_session(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("3 stateful counter (fun only)");
     let sid = LocalsScope::new();
     let r1 = fun
@@ -105,9 +97,7 @@ async fn scenario_counter_session(
     Ok(())
 }
 
-async fn scenario_fs_roundtrip(
-    fun: &frame_port_fun::FunPort,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_fs_roundtrip(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("4 write_file -> read_file");
     let dir = std::env::temp_dir().join("runtime-showcase");
     std::fs::create_dir_all(&dir)?;
@@ -129,9 +119,7 @@ async fn scenario_fs_roundtrip(
     Ok(())
 }
 
-async fn scenario_terminal(
-    fun: &frame_port_fun::FunPort,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_terminal(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("5 bash");
     let r = fun
         .invoke_str(
@@ -145,7 +133,7 @@ async fn scenario_terminal(
     Ok(())
 }
 
-async fn scenario_todo(fun: &frame_port_fun::FunPort) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_todo(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("6 todo_write");
     let sid = LocalsScope::new();
     let r = fun
@@ -167,11 +155,7 @@ fn scenario_per_cap_access(expose: &AbilityExpose, ids: &[&str]) {
     banner("7 per-instance access");
     for id in ["algo.echo", "demo.counter", "read_file"] {
         let r = expose.resolve(id);
-        println!(
-            "  {id}: enabled={} access={:?}",
-            r.enabled,
-            r.access.iter().map(|a| a.as_str()).collect::<Vec<_>>()
-        );
+        println!("  {id}: enabled={}", r.enabled);
     }
     println!(
         "  gate any(cli)={} any(http)={} any(mcp)={} any(fun)={}",
@@ -211,22 +195,16 @@ fn scenario_per_cap_access(expose: &AbilityExpose, ids: &[&str]) {
     println!();
 }
 
-fn scenario_tool_bin_hint(expose: &AbilityExpose, ids: &[&str]) {
-    banner("8 tool_bin artifacts");
-    for id in expose.tool_bin_ids(ids.iter().copied()) {
-        let r = expose.resolve(&id);
-        let has_bin = r.artifacts.contains(&ArtifactKind::ToolBin);
-        println!("  {id}: tool_bin={has_bin}");
+fn scenario_enabled_filter(expose: &AbilityExpose, ids: &[&str]) {
+    banner("8 enabled filter");
+    for id in expose.filter_enabled(ids.iter().copied()) {
+        println!("  enabled: {id}");
     }
-    println!(
-        "  doctor: cargo run -p web-agent -- doctor"
-    );
+    println!("  doctor: cargo run -p web-agent -- doctor");
     println!();
 }
 
-async fn scenario_filtered_denied(
-    fun: &frame_port_fun::FunPort,
-) -> Result<(), Box<dyn std::error::Error>> {
+async fn scenario_filtered_denied(fun: &FunPort) -> Result<(), Box<dyn std::error::Error>> {
     banner("9 denied unknown ability");
     match fun.invoke_str("config.env", json!({}), None).await {
         Ok(v) => println!("UNEXPECTED => {}", serde_json::to_string(&v.data)?),

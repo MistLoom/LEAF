@@ -42,3 +42,8 @@ pub use protocol_registry::{
 
 #[cfg(feature = "mgmt")]
 pub mod mgmt;
+
+/// 仓外接入：只依赖 `frame-compose`，勿直接依赖 `frame-core` 与各 port crate。
+pub use frame_core::{AbilityExpose, AccessKind, ArtifactKind, LocalsScope};
+#[cfg(feature = "port-fun")]
+pub use frame_port_fun::FunPort;

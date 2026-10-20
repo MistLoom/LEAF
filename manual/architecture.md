@@ -48,7 +48,7 @@ Event listen and intercept are registered through `AppControl` on the entry app.
 4. A cross-app call requires `open: true` on the target
 5. Intercept stays with the owning app, except `common` Abilities, which the entry app may intercept. Listen of another scenario app requires `open: true`
 6. Protocol identity lives in declarations and Ports — not as kernel business types
-7. External packages must not depend on `frame-core`, ports, or `ability-core`
+7. Out-of-tree packages (e.g. `external/`) must not depend on `frame-core`, ports, or `ability-core`; runtime consumers depend on `frame-compose` only (re-exports as needed)
 
 ## Status
 

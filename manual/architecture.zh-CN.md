@@ -48,7 +48,7 @@ Ports (CLI / HTTP / MCP / Fun / …)
 4. 跨应用调用要求目标 `open: true`
 5. 拦截属于属主应用。`common` 能力可由入口应用拦截。监听其他场景应用的 Ability 要求目标 `open: true`
 6. 协议身份属于声明与 Port，而不是内核业务类型
-7. 外部包不得依赖 `frame-core`、port 或 `ability-core`
+7. `external` 等仓外包不得依赖 `frame-core`、port 或 `ability-core`；消费运行时只依赖 `frame-compose`（由其再导出所需类型）
 
 ## 状态
 
