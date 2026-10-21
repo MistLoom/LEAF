@@ -4,31 +4,31 @@ members = [
     "frame/support/macros",
     "frame/support",
     "frame/protocol",
-    "common/abilitys/config/config",
-    "common/abilitys/storage/store",
-    "common/abilitys/storage/store_persist",
-    "common/abilitys/storage/store_temp",
-    "common/abilitys/content/markdown",
-    "common/abilitys/fs/read_file",
-    "common/abilitys/fs/write_file",
-    "common/abilitys/fs/bash",
-    "common/abilitys/workflow/todo_write",
-    "common/abilitys/sample/echo",
-    "common/abilitys/sample/counter",
-    "common/abilitys/sample/shout",
-    "common/abilitys/workflow/task",
-    "common/abilitys/dev/devkit",
-    "common/abilitys/dev/codegen_fixture",
-    "common/abilitys/dev/test_feedback",
+    "abilitys/config/config",
+    "abilitys/storage/store",
+    "abilitys/storage/store_persist",
+    "abilitys/storage/store_temp",
+    "abilitys/content/markdown",
+    "abilitys/fs/read_file",
+    "abilitys/fs/write_file",
+    "abilitys/fs/bash",
+    "abilitys/workflow/todo_write",
+    "abilitys/sample/echo",
+    "abilitys/sample/counter",
+    "abilitys/sample/shout",
+    "abilitys/workflow/task",
+    "abilitys/dev/devkit",
+    "abilitys/dev/codegen_fixture",
+    "abilitys/dev/test_feedback",
     "apps/agent-test/ability/skill",
     "apps/agent-test/ability/prompt",
     "apps/agent-test/ability/dispatch",
     "apps/agent-test/ability/chat",
     "apps/agent-test/ability/turn",
     "apps/agent-test/ability/session",
-    "common/abilitys/eco/plugin_host",
-    "common/abilitys/eco/claude_mod",
-    "common/abilitys/eco/dsh_plugin",
+    "abilitys/eco/plugin_host",
+    "abilitys/eco/claude_mod",
+    "abilitys/eco/dsh_plugin",
     "frame/core",
     "frame/port-cli",
     "frame/port-http",
@@ -42,7 +42,7 @@ members = [
 ]
 default-members = ["apps/web-agent"]
 
-exclude = ["external/showcase", "external/ability-probe", "external/ability-sdk", "external/ability-sdk-codegen"]
+exclude = ["external/showcase", "external/ability-probe", "SDK/ability-sdk", "SDK/ability-sdk-codegen"]
 
 [workspace.package]
 version = "0.1.0"
@@ -61,22 +61,22 @@ frame-port-http = { path = "frame/port-http" }
 frame-port-mcp = { path = "frame/port-mcp" }
 frame-port-fun = { path = "frame/port-fun" }
 frame-port-grpc = { path = "frame/port-grpc" }
-ability-sdk-codegen = { path = "external/ability-sdk-codegen" }
-ability-config = { path = "common/abilitys/config/config" }
-ability-store = { path = "common/abilitys/storage/store" }
-ability-store-persist = { path = "common/abilitys/storage/store_persist" }
-ability-store-temp = { path = "common/abilitys/storage/store_temp" }
-ability-markdown = { path = "common/abilitys/content/markdown" }
-ability-read-file = { path = "common/abilitys/fs/read_file" }
-ability-write-file = { path = "common/abilitys/fs/write_file" }
-ability-bash = { path = "common/abilitys/fs/bash" }
-ability-todo-write = { path = "common/abilitys/workflow/todo_write" }
-ability-echo = { path = "common/abilitys/sample/echo" }
-ability-counter = { path = "common/abilitys/sample/counter" }
-ability-shout = { path = "common/abilitys/sample/shout" }
-ability-task = { path = "common/abilitys/workflow/task" }
-ability-devkit = { path = "common/abilitys/dev/devkit" }
-ability-codegen-fixture = { path = "common/abilitys/dev/codegen_fixture" }
+ability-sdk-codegen = { path = "SDK/ability-sdk-codegen" }
+ability-config = { path = "abilitys/config/config" }
+ability-store = { path = "abilitys/storage/store" }
+ability-store-persist = { path = "abilitys/storage/store_persist" }
+ability-store-temp = { path = "abilitys/storage/store_temp" }
+ability-markdown = { path = "abilitys/content/markdown" }
+ability-read-file = { path = "abilitys/fs/read_file" }
+ability-write-file = { path = "abilitys/fs/write_file" }
+ability-bash = { path = "abilitys/fs/bash" }
+ability-todo-write = { path = "abilitys/workflow/todo_write" }
+ability-echo = { path = "abilitys/sample/echo" }
+ability-counter = { path = "abilitys/sample/counter" }
+ability-shout = { path = "abilitys/sample/shout" }
+ability-task = { path = "abilitys/workflow/task" }
+ability-devkit = { path = "abilitys/dev/devkit" }
+ability-codegen-fixture = { path = "abilitys/dev/codegen_fixture" }
 ai-protocol = { path = "frame/protocol" }
 ai-skill = { path = "apps/agent-test/ability/skill" }
 ai-prompt = { path = "apps/agent-test/ability/prompt" }
@@ -84,9 +84,9 @@ ai-dispatch = { path = "apps/agent-test/ability/dispatch" }
 ai-chat = { path = "apps/agent-test/ability/chat" }
 ai-turn = { path = "apps/agent-test/ability/turn" }
 ai-session = { path = "apps/agent-test/ability/session" }
-ability-plugin-host = { path = "common/abilitys/eco/plugin_host" }
-ability-claude-mod = { path = "common/abilitys/eco/claude_mod" }
-ability-dsh-plugin = { path = "common/abilitys/eco/dsh_plugin" }
+ability-plugin-host = { path = "abilitys/eco/plugin_host" }
+ability-claude-mod = { path = "abilitys/eco/claude_mod" }
+ability-dsh-plugin = { path = "abilitys/eco/dsh_plugin" }
 sha2 = "0.10"
 encoding_rs = "0.8"
 

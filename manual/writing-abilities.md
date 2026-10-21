@@ -16,7 +16,7 @@ cli|mcp|tools|grpc|skill/
   info.yml        # protocol projection (when needed)
 ```
 
-Shared and app-owned Abilities share the same layout; assembly discovers ownership.
+Shared Abilities live under `abilitys/<category>/<name>`; app-owned under `apps/<app>/ability/<name>`. Package layout is the same.
 
 ## Handler and factory
 

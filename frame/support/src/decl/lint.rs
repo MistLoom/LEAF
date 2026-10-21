@@ -97,15 +97,11 @@ pub fn lint_ability_package(meta: &AbilityPackageMeta, opts: &LintOptions) -> Li
 
 /// 发现 workspace 下全部能力根目录。
 ///
-/// - `common/abilitys/<category>/<name>/ability.yml`：通用能力
+/// - `abilitys/<category>/<name>/ability.yml`：通用能力
 /// - `apps/<app>/ability/<name>/ability.yml`：场景应用自有能力
 pub fn discover_ability_roots(workspace: &Path) -> Vec<PathBuf> {
     let mut roots = Vec::new();
-    collect_ability_roots(
-        &workspace.join("common").join("abilitys"),
-        workspace,
-        &mut roots,
-    );
+    collect_ability_roots(&workspace.join("abilitys"), workspace, &mut roots);
     let apps_dir = workspace.join("apps");
     if let Ok(apps) = fs::read_dir(&apps_dir) {
         for app in apps.flatten() {
@@ -146,7 +142,7 @@ pub fn lint_workspace(workspace: &Path, opts: &LintOptions) -> Result<Vec<LintRe
     let roots = discover_ability_roots(workspace);
     if roots.is_empty() {
         return Err(format!(
-            "未在 {} 下发现 common/abilitys 或 apps/*/ability",
+            "未在 {} 下发现 abilitys 或 apps/*/ability",
             workspace.display()
         ));
     }

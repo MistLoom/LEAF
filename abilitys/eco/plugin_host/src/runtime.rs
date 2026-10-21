@@ -87,7 +87,7 @@ pub fn resolve_host_script() -> PathBuf {
     if let Ok(p) = std::env::var("LEAF_PLUGIN_HOST") {
         return PathBuf::from(p);
     }
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../apps/plugin-host/run.mjs")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../apps/plugin-host/run.mjs")
 }
 
 pub fn resolve_plugin_path_public(path: &str) -> String {

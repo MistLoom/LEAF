@@ -22,4 +22,4 @@ uuid = { workspace = true }
 
 [dev-dependencies]
 ability-probe = { path = "../../external/ability-probe" }
-ability-sdk = { path = "../../external/ability-sdk" }
+ability-sdk = { path = "../../SDK/ability-sdk" }

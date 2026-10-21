@@ -9,7 +9,7 @@ use ability_plugin_host::{
 
 fn fixture(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../../apps/web-agent/tests/fixtures")
+        .join("../../../apps/web-agent/tests/fixtures")
         .join(name)
 }
 

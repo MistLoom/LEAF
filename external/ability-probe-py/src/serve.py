@@ -3,9 +3,11 @@
 import sys
 from pathlib import Path
 
-_SDK = Path(__file__).resolve().parents[2] / "ability-sdk-py" / "src"
-if _SDK.is_dir():
-    sys.path.insert(0, str(_SDK))
+for _anc in Path(__file__).resolve().parents:
+    _sdk = _anc / "SDK" / "ability-sdk-py" / "src"
+    if _sdk.is_dir():
+        sys.path.insert(0, str(_sdk))
+        break
 
 from leaf_ability_sdk import serve_ability
 

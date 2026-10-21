@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - "apps/ability-core/**"
-      - "external/ability-sdk-**"
+      - "SDK/ability-sdk-**"
       - "external/ability-probe-**"
       - "frame/support/**"
       - "frame/compose/**"
@@ -12,7 +12,7 @@ on:
   pull_request:
     paths:
       - "apps/ability-core/**"
-      - "external/ability-sdk-**"
+      - "SDK/ability-sdk-**"
       - "external/ability-probe-**"
       - "frame/support/**"
       - "frame/compose/**"

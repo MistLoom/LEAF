@@ -38,7 +38,7 @@ let response = app
     .await?;
 ```
 
-Same-app `ctx.call` is not gated by `AbilityExpose`. A call into another app requires `open: true` on the target. Shared Abilities are open to the entry app.
+Same-app `ctx.call` is not gated by `AbilityExpose`. A call into another app requires `open: true` on the target. Default assembly links shared Abilities from repo-root `abilitys/`.
 
 ## Subscribe
 

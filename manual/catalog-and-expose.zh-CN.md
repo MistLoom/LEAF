@@ -4,7 +4,7 @@
 
 场景应用分三步装配 Ability：发现源、用 `AbilityExpose` 决定加载哪些实例，再在得到的 `Gateway` 上打开 Port。
 
-框架按约定布局发现 `ability.yml`。共享能力对入口应用可调用、可监听、可拦截。每条 source 带有属主应用和 `open`。进程用 `AppBuilder::app` 或 `ComposeOptions::app` 声明入口应用。调用其他应用的 Ability 要求 `open: true`。监听与拦截走 `AppHandle::control`。
+框架扫描仓库根 `abilitys/` 与各应用 `apps/<app>/ability/` 下的 `ability.yml`。共享能力对入口应用可调用、可监听、可拦截。每条 source 带有属主应用和 `open`。进程用 `AppBuilder::app` 或 `ComposeOptions::app` 声明入口应用。调用其他应用的 Ability 要求 `open: true`。监听与拦截走 `AppHandle::control`。
 
 ## 协议声明
 

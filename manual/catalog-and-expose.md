@@ -4,7 +4,7 @@ English · [中文](catalog-and-expose.zh-CN.md)
 
 Scenario apps assemble Abilities in three steps: discover sources, decide which instances to load (`AbilityExpose`), then open Ports on the resulting `Gateway`.
 
-The framework discovers `ability.yml` from the conventional layout. Shared Abilities are callable, listenable, and interceptable by the entry app. Each source records its owning app and `open`. Set the process entry app with `AppBuilder::app` or `ComposeOptions::app`. A call into another app requires `open: true`. Listen and intercept go through `AppHandle::control`.
+The framework scans `ability.yml` under repo-root `abilitys/` and each `apps/<app>/ability/`. Shared Abilities are callable, listenable, and interceptable by the entry app. Each source records its owning app and `open`. Set the process entry app with `AppBuilder::app` or `ComposeOptions::app`. A call into another app requires `open: true`. Listen and intercept go through `AppHandle::control`.
 
 ## Protocol declaration
 

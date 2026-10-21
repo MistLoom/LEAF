@@ -28,7 +28,7 @@ Event listen and intercept are registered through `AppControl` on the entry app.
 | Transport | Gateway, Ports, Expose, controllers |
 | Engine | Host, event bus, admission for calls and events |
 | Composition | Discovery, bootstrap, `AppControl` |
-| Abilities | Shared or app-owned capability implementations |
+| Abilities | Shared under `abilitys/<category>/<name>` at repo root; app-owned under `apps/<app>/ability/<name>` |
 | Apps | Scenario processes and assembly policy |
 
 Node / Python Abilities use the **guest wire protocol** with the same `ability.yml` model as Rust. See [Guest protocol](ability-guest-protocol.zh-CN.md).
@@ -37,7 +37,7 @@ Node / Python Abilities use the **guest wire protocol** with the same `ability.y
 
 - **Shared Abilities**: callable, listenable, and interceptable by the entry app (exact set is assembly-defined).
 - **App-owned Abilities**: owner-only by default; `open: true` allows other apps to call or listen.
-- **Out-of-tree packages**: attach via the guest SDK and wire protocol — not by linking the runtime kernel.
+- **Out-of-tree packages**: attach via Guest SDK under repo-root `SDK/` and the wire protocol — not by linking the runtime kernel.
 
 ## Rules
 

@@ -66,9 +66,9 @@ impl GuestSourceProvider {
                     .map_err(|e| Error::io(e.to_string()))?;
                 let sdk_src = self
                     .root
-                    .parent()
-                    .map(|ext| ext.join("ability-sdk-py").join("src"))
-                    .filter(|p| p.is_dir())
+                    .ancestors()
+                    .map(|anc| anc.join("SDK").join("ability-sdk-py").join("src"))
+                    .find(|p| p.is_dir())
                     .and_then(|p| p.canonicalize().ok());
                 let mut path = src.to_string_lossy().to_string();
                 if let Some(sdk) = sdk_src {

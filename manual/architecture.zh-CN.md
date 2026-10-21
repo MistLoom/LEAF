@@ -28,7 +28,7 @@ Ports (CLI / HTTP / MCP / Fun / …)
 | 传输 | Gateway、Port、Expose、控制器 |
 | 引擎 | Host、事件总线、调用与事件准入 |
 | 组合 | 目录发现、启动装配、`AppControl` |
-| 能力 | 可复用或归属某一应用的能力实现 |
+| 能力 | 仓库根 `abilitys/<分类>/<name>` 为共享实现；`apps/<app>/ability/<name>` 为应用自有 |
 | 应用 | 场景进程与装配策略 |
 
 Node / Python 能力通过 **Guest 线协议** 接入，声明模型与 Rust 共用 `ability.yml`。见 [Guest 协议](ability-guest-protocol.zh-CN.md)。
@@ -37,7 +37,7 @@ Node / Python 能力通过 **Guest 线协议** 接入，声明模型与 Rust 共
 
 - **共享能力**：对入口应用开放调用、监听与拦截（具体集合由装配决定）。
 - **应用自有能力**：默认仅属主可调用；`open: true` 时允许其他应用调用或监听。
-- **仓外能力包**：通过 Guest SDK 与线协议接入，不直接链接运行时内核。
+- **仓外能力包**：通过仓库根 `SDK/` 下 Guest SDK 与线协议接入，不直接链接运行时内核。
 
 ## 约束
 

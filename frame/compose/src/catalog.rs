@@ -43,7 +43,7 @@ pub struct WorkspaceCatalog {
 }
 
 impl WorkspaceCatalog {
-    /// 扫描 `common/abilitys` 与 `apps/*/ability`，并标记 linked 状态。
+    /// 扫描 `abilitys` 与 `apps/*/ability`，并标记 linked 状态。
     pub fn discover() -> Self {
         let ws = workspace_root();
         let linked: BTreeSet<String> = crate::registry::linked_ids()
@@ -113,11 +113,11 @@ impl WorkspaceCatalog {
     }
 }
 
-/// `common/abilitys/...` 归属 `common`；`apps/<app>/ability/...` 归属该应用。
+/// `abilitys/...` 归属 `common`（共享能力）；`apps/<app>/ability/...` 归属该应用。
 pub fn owner_app(rel: &str) -> String {
     let mut parts = rel.split('/');
     match parts.next() {
-        Some("common") => "common".into(),
+        Some("abilitys") => "common".into(),
         Some("apps") => parts.next().unwrap_or("").into(),
         _ => String::new(),
     }

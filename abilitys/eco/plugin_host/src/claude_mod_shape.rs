@@ -42,7 +42,7 @@ pub fn resolve_claude_compat_path() -> std::path::PathBuf {
         }
     }
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../../apps/plugin-host/claude-mod.compat.json")
+        .join("../../../apps/plugin-host/claude-mod.compat.json")
 }
 
 pub fn read_claude_compat() -> ClaudeCompatFile {

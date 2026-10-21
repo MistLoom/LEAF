@@ -36,11 +36,7 @@ fn main() {
     let generated_path = out_dir.join("providers.rs");
 
     let mut entries: Vec<ScanEntry> = Vec::new();
-    scan_ability_dir(
-        &workspace.join("common").join("abilitys"),
-        "common/abilitys",
-        &mut entries,
-    );
+    scan_ability_dir(&workspace.join("abilitys"), "abilitys", &mut entries);
     let apps_dir = workspace.join("apps");
     if let Ok(apps) = fs::read_dir(&apps_dir) {
         for app_entry in apps.flatten() {
@@ -108,7 +104,7 @@ fn main() {
     println!("cargo:rerun-if-changed={}", apps_dir.display());
     println!(
         "cargo:rerun-if-changed={}",
-        workspace.join("common").join("abilitys").display()
+        workspace.join("abilitys").display()
     );
     println!(
         "cargo:rerun-if-changed={}",

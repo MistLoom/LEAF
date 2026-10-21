@@ -48,4 +48,4 @@ UTF-8 JSON，一行一帧，以 `\n` 结束。空行忽略。
 
 未写前缀时按目录推断：有 `Cargo.toml` 为 Rust；否则存在 `src/serve.mjs` / `src/serve.py`（或仅 `package.json` / `pyproject.toml`）。冲突时须显写前缀。
 
-入口文件通过 Leaf Guest SDK 的 `serveAbility`（Node）或 `serve_ability`（Python），在固定路径注册 `ability.yml` 中的方法 handler。
+入口文件通过 Leaf Guest SDK 的 `serveAbility`（Node）或 `serve_ability`（Python），在固定路径注册 `ability.yml` 中的方法 handler。仓内 SDK 位于仓库根 `SDK/ability-sdk-ts`、`SDK/ability-sdk-py`（Rust 线协议库为 `SDK/ability-sdk`）。

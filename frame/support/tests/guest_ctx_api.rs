@@ -31,10 +31,10 @@ fn guest_sdk_covers_ctx_api_spec() {
             .expect("parse");
 
     let ts_guest =
-        std::fs::read_to_string(repo_root().join("external/ability-sdk-ts/lib/guest.js"))
+        std::fs::read_to_string(repo_root().join("SDK/ability-sdk-ts/lib/guest.js"))
             .expect("read guest.js");
     let py_guest = std::fs::read_to_string(
-        repo_root().join("external/ability-sdk-py/src/leaf_ability_sdk/guest.py"),
+        repo_root().join("SDK/ability-sdk-py/src/leaf_ability_sdk/guest.py"),
     )
     .expect("read guest.py");
 

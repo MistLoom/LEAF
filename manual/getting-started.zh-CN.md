@@ -38,7 +38,7 @@ let response = app
     .await?;
 ```
 
-同应用的 `ctx.call` 不受 `AbilityExpose` 限制。调用其他应用的 Ability 要求目标 `open: true`。共享能力对入口应用开放。
+同应用的 `ctx.call` 不受 `AbilityExpose` 限制。调用其他应用的 Ability 要求目标 `open: true`。默认装配会链接仓库根 `abilitys/` 下的共享能力。
 
 ## 订阅事件
 

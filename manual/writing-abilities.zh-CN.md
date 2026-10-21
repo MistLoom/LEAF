@@ -16,7 +16,7 @@ cli|mcp|tools|grpc|skill/
   info.yml        # 协议投影（按需）
 ```
 
-共享能力与应用自有能力使用相同布局，由装配发现其归属。
+共享能力位于 `abilitys/<分类>/<name>`，应用自有能力位于 `apps/<app>/ability/<name>`；包内布局相同。
 
 ## Handler 与 Factory
 
