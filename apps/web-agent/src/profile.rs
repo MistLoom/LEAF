@@ -6,7 +6,7 @@ use ability_plugin_host::ensure_claude_mod_path_allowed;
 use ability_plugin_host::should_skip_vendor_claude_plugin;
 use frame_core::{AbilityExpose, Error, Result};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tracing::warn;
 
 #[derive(Debug, Default, Deserialize)]
@@ -57,7 +57,8 @@ pub fn resolve_default_provider_path() -> Option<PathBuf> {
             return Some(pb);
         }
     }
-    let repo = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/agent_test.provider.yaml");
+    let repo =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/agent_test.provider.yaml");
     if repo.is_file() {
         return Some(repo);
     }
@@ -87,8 +88,8 @@ pub fn load_yaml_value(path: &Path) -> Result<Value> {
 pub fn apply_plugins_profile(doc: &mut Value, profile_path: &Path) -> Result<()> {
     let raw = std::fs::read_to_string(profile_path)
         .map_err(|e| Error::config(format!("读取插件清单失败: {e}")))?;
-    let profile: PluginsProfile = serde_yaml::from_str(&raw)
-        .map_err(|e| Error::config(format!("插件清单格式无效: {e}")))?;
+    let profile: PluginsProfile =
+        serde_yaml::from_str(&raw).map_err(|e| Error::config(format!("插件清单格式无效: {e}")))?;
     let base = profile_path.parent().unwrap_or(Path::new("."));
     let abilities = doc
         .as_object_mut()
@@ -97,7 +98,9 @@ pub fn apply_plugins_profile(doc: &mut Value, profile_path: &Path) -> Result<()>
         .ok_or_else(|| Error::config("装配缺少 abilities"))?;
 
     if !profile.claude_mod.is_empty() {
-        let entry = abilities.entry("claude_mod".to_string()).or_insert(json!({}));
+        let entry = abilities
+            .entry("claude_mod".to_string())
+            .or_insert(json!({}));
         entry["enabled"] = json!(true);
         let plugins = resolve_plugin_entries(base, &profile.claude_mod, true)?
             .iter()
@@ -106,7 +109,9 @@ pub fn apply_plugins_profile(doc: &mut Value, profile_path: &Path) -> Result<()>
         entry["config"] = json!({ "plugins": plugins });
     }
     if !profile.dsh.is_empty() {
-        let entry = abilities.entry("dsh_plugin".to_string()).or_insert(json!({}));
+        let entry = abilities
+            .entry("dsh_plugin".to_string())
+            .or_insert(json!({}));
         entry["enabled"] = json!(true);
         let plugins = resolve_plugin_entries(base, &profile.dsh, false)?
             .iter()
@@ -129,15 +134,19 @@ fn resolve_plugin_entries(
     Ok(out)
 }
 
-fn expand_plugin_entry(base: &Path, entry: &PluginPath, claude_mod: bool) -> Result<Vec<ResolvedPlugin>> {
+fn expand_plugin_entry(
+    base: &Path,
+    entry: &PluginPath,
+    claude_mod: bool,
+) -> Result<Vec<ResolvedPlugin>> {
     let mode_count = [
         entry.path.is_some(),
         entry.vendor_npm.is_some(),
         entry.vendor_plugins_dir.is_some(),
     ]
-        .into_iter()
-        .filter(|set| *set)
-        .count();
+    .into_iter()
+    .filter(|set| *set)
+    .count();
     if mode_count != 1 {
         return Err(Error::config(
             "插件项需且仅需指定 path、vendor_npm 或 vendor_plugins_dir 之一",
@@ -157,22 +166,31 @@ fn expand_plugin_entry(base: &Path, entry: &PluginPath, claude_mod: bool) -> Res
     if let Some(vendor) = &entry.vendor_npm {
         return expand_vendor_npm(base, vendor, entry);
     }
-    let dir = entry.vendor_plugins_dir.as_ref().expect("vendor_plugins_dir");
+    let dir = entry
+        .vendor_plugins_dir
+        .as_ref()
+        .expect("vendor_plugins_dir");
     if !claude_mod {
         return Err(Error::config("vendor_plugins_dir 仅用于 claude_mod 清单"));
     }
     expand_claude_vendor_plugins_dir(base, dir, entry)
 }
 
-fn expand_vendor_npm(base: &Path, vendor_rel: &str, template: &PluginPath) -> Result<Vec<ResolvedPlugin>> {
+fn expand_vendor_npm(
+    base: &Path,
+    vendor_rel: &str,
+    template: &PluginPath,
+) -> Result<Vec<ResolvedPlugin>> {
     let vendor_dir = PathBuf::from(resolve_profile_path(base, vendor_rel));
     let pkg_path = vendor_dir.join("package.json");
     let raw = std::fs::read_to_string(&pkg_path).map_err(|e| {
-        Error::config(format!("读取 vendor npm 清单失败 {}: {e}", pkg_path.display()))
+        Error::config(format!(
+            "读取 vendor npm 清单失败 {}: {e}",
+            pkg_path.display()
+        ))
     })?;
-    let vendor: VendorPackageJson = serde_json::from_str(&raw).map_err(|e| {
-        Error::config(format!("解析 vendor package.json 失败: {e}"))
-    })?;
+    let vendor: VendorPackageJson = serde_json::from_str(&raw)
+        .map_err(|e| Error::config(format!("解析 vendor package.json 失败: {e}")))?;
     let modules = vendor_dir.join("node_modules");
     let mut plugins = Vec::new();
     for dep_name in vendor.dependencies.keys() {
@@ -209,12 +227,18 @@ fn expand_claude_vendor_plugins_dir(
 ) -> Result<Vec<ResolvedPlugin>> {
     let root = PathBuf::from(resolve_profile_path(base, dir_rel));
     if !root.is_dir() {
-        return Err(Error::config(format!("vendor_plugins_dir 不是目录: {}", root.display())));
+        return Err(Error::config(format!(
+            "vendor_plugins_dir 不是目录: {}",
+            root.display()
+        )));
     }
     let mut plugins = Vec::new();
     let mut skipped_module = Vec::new();
     let children = std::fs::read_dir(&root).map_err(|e| {
-        Error::config(format!("读取 vendor_plugins_dir 失败 {}: {e}", root.display()))
+        Error::config(format!(
+            "读取 vendor_plugins_dir 失败 {}: {e}",
+            root.display()
+        ))
     })?;
     for child in children {
         let child = child.map_err(|e| Error::config(format!("读取子目录失败: {e}")))?;
@@ -226,7 +250,11 @@ fn expand_claude_vendor_plugins_dir(
             continue;
         }
         if should_skip_vendor_claude_plugin(&path)? {
-            skipped_module.push(path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default());
+            skipped_module.push(
+                path.file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
+            );
             continue;
         }
         plugins.push(ResolvedPlugin {

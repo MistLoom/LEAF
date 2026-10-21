@@ -1,9 +1,9 @@
 //! 业务逻辑：run
 
-use ai_protocol::{json_content, ToolCall, ToolResultMessage};
-use ability_support::{method_catalog, AbilityCtx, ProtocolKind, Error, Result};
+use ability_support::{AbilityCtx, Error, ProtocolKind, Result, method_catalog};
+use ai_protocol::{ToolCall, ToolResultMessage, json_content};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::map::NameMap;
 
@@ -32,7 +32,8 @@ async fn dispatch_one(
 }
 
 pub async fn run(ctx: &dyn AbilityCtx, args: Value) -> Result<Value> {
-    let a: RunArgs = serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
+    let a: RunArgs =
+        serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
     let tools_ctx = ctx.with_protocol_filter(ProtocolKind::Tools);
     let names = NameMap::from_catalog(&method_catalog(&tools_ctx.catalog()));
     let mut out = Vec::new();

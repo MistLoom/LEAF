@@ -8,6 +8,10 @@ description = "Ability 声明文件代码生成（build.rs 依赖）"
 [lib]
 path = "src/lib.rs"
 
+[[bin]]
+name = "ability-sdk-codegen"
+path = "src/main.rs"
+
 [dependencies]
 ability-support = { path = "../../frame/support" }
 serde_json = "1"

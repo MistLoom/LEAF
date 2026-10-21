@@ -84,8 +84,7 @@ impl ChatCompletionResponse {
     }
 
     pub fn tool_calls(&self) -> Option<&[crate::ToolCall]> {
-        self.first_message()
-            .and_then(|m| m.tool_calls.as_deref())
+        self.first_message().and_then(|m| m.tool_calls.as_deref())
     }
 }
 

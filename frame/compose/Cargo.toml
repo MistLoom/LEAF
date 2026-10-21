@@ -39,7 +39,6 @@ ability-write-file = ["dep:ability-write-file"]
 ability-bash = ["dep:ability-bash"]
 ability-todo-write = ["dep:ability-todo-write"]
 ability-task = ["dep:ability-task"]
-ability-kb = ["dep:ability-kb"]
 ability-dispatch = ["dep:ai-dispatch"]
 ability-chat = ["dep:ai-chat"]
 ability-turn = ["dep:ai-turn"]
@@ -48,6 +47,8 @@ ability-prompt = ["dep:ai-prompt", "ability-skill"]
 ability-session = ["dep:ai-session"]
 ability-claude-mod = ["dep:ability-claude-mod"]
 ability-dsh-plugin = ["dep:ability-dsh-plugin"]
+ability-probe-ts = []
+ability-probe-py = []
 mgmt = ["dep:axum", "dep:async-stream", "dep:futures-core", "dep:tower-http"]
 port-fun = ["dep:frame-port-fun"]
 
@@ -74,7 +75,6 @@ ability-write-file = { workspace = true, optional = true }
 ability-bash = { workspace = true, optional = true }
 ability-todo-write = { workspace = true, optional = true }
 ability-task = { workspace = true, optional = true }
-ability-kb = { workspace = true, optional = true }
 ai-dispatch = { workspace = true, optional = true }
 ai-chat = { workspace = true, optional = true }
 ai-turn = { workspace = true, optional = true }
@@ -90,6 +90,7 @@ futures-core = { version = "0.3", optional = true }
 tower-http = { workspace = true, optional = true }
 
 [build-dependencies]
+ability-support = { workspace = true }
 serde_yaml = { workspace = true }
 
 [dev-dependencies]

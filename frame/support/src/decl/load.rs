@@ -81,6 +81,7 @@ pub fn load_tools_info(path: &Path) -> Result<ToolsInfo, String> {
 pub fn load_ability_package(root: &Path) -> Result<AbilityPackageMeta, String> {
     let yml = AbilityPackageMeta::ability_yml_path(root);
     let decl = load_ability_decl(&yml)?;
+    let runtime_kind = super::runtime_resolve::resolve_runtime_kind(root, &decl.framework_version)?;
     let detected = detect_protocols(root);
     let declared: BTreeSet<ProtocolKind> = decl.protocols.iter().copied().collect();
 
@@ -104,30 +105,34 @@ pub fn load_ability_package(root: &Path) -> Result<AbilityPackageMeta, String> {
     }
 
     let cli = if declared.contains(&ProtocolKind::Cli) {
-        Some(load_cli_info(
-            &AbilityPackageMeta::protocol_info_path(root, ProtocolKind::Cli),
-        )?)
+        Some(load_cli_info(&AbilityPackageMeta::protocol_info_path(
+            root,
+            ProtocolKind::Cli,
+        ))?)
     } else {
         None
     };
     let mcp = if declared.contains(&ProtocolKind::Mcp) {
-        Some(load_mcp_info(
-            &AbilityPackageMeta::protocol_info_path(root, ProtocolKind::Mcp),
-        )?)
+        Some(load_mcp_info(&AbilityPackageMeta::protocol_info_path(
+            root,
+            ProtocolKind::Mcp,
+        ))?)
     } else {
         None
     };
     let grpc = if declared.contains(&ProtocolKind::Grpc) {
-        Some(load_grpc_info(
-            &AbilityPackageMeta::protocol_info_path(root, ProtocolKind::Grpc),
-        )?)
+        Some(load_grpc_info(&AbilityPackageMeta::protocol_info_path(
+            root,
+            ProtocolKind::Grpc,
+        ))?)
     } else {
         None
     };
     let skill = if declared.contains(&ProtocolKind::Skill) {
-        Some(load_skill_info(
-            &AbilityPackageMeta::protocol_info_path(root, ProtocolKind::Skill),
-        )?)
+        Some(load_skill_info(&AbilityPackageMeta::protocol_info_path(
+            root,
+            ProtocolKind::Skill,
+        ))?)
     } else {
         None
     };
@@ -145,6 +150,7 @@ pub fn load_ability_package(root: &Path) -> Result<AbilityPackageMeta, String> {
     Ok(AbilityPackageMeta {
         root: root.to_path_buf(),
         decl,
+        runtime_kind,
         protocols: declared,
         cli,
         mcp,

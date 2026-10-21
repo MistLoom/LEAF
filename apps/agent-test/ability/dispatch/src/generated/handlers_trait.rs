@@ -3,10 +3,16 @@ use async_trait::async_trait;
 
 
 #[derive(Debug, serde::Deserialize)]
-pub struct DefsArgs {}
+pub struct DefsArgs {
+
+}
 
 #[derive(Debug, serde::Deserialize)]
-pub struct RunArgs {}
+pub struct RunArgs {
+    pub calls: Vec<String>,
+#[serde(default)]
+    pub continue_on_error: bool,
+}
 
 
 #[async_trait]

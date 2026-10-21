@@ -7,11 +7,11 @@ use std::sync::Arc;
 
 use ability_core::AbilityHost;
 use ability_support::{
-    host_event, AbilityEvent, BusEvent, EventClass, EventFilter, EventListener, InstanceId,
-    UserEvent, UserEventSink,
+    AbilityEvent, BusEvent, EventClass, EventFilter, EventListener, InstanceId, UserEvent,
+    UserEventSink, host_event,
 };
 use frame_compose::{AppControl, AppHandle};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tokio::sync::broadcast;
 
 pub fn spawn_driver(app: &AppHandle, events_tx: broadcast::Sender<String>) {
@@ -187,10 +187,8 @@ async fn translate_ability_event(host: &AbilityHost, ev: &AbilityEvent) {
                 ))
                 .await;
             }
-            host.emit_user(
-                UserEvent::new("session.items_appended", ev.payload.clone()),
-            )
-            .await;
+            host.emit_user(UserEvent::new("session.items_appended", ev.payload.clone()))
+                .await;
         }
         _ => {}
     }

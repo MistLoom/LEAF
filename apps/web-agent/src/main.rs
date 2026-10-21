@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 use web_agent::{
-    bootstrap_with_options, default_assembly_path, default_plugins_profile_path, diagnose,
-    default_provider_path, ecosystem,
+    bootstrap_with_options, default_assembly_path, default_plugins_profile_path,
+    default_provider_path, diagnose, ecosystem,
 };
 
 #[derive(Parser)]
@@ -67,11 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let plugins_path: Option<PathBuf> = match &command {
         Commands::Serve { .. } | Commands::Doctor => cli.plugins.clone().or_else(|| {
             let def = default_plugins_profile_path();
-            if def.is_file() {
-                Some(def)
-            } else {
-                None
-            }
+            if def.is_file() { Some(def) } else { None }
         }),
         _ => cli.plugins.clone(),
     };
@@ -94,24 +90,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 eprintln!("装配: {}", default_assembly_path().display());
             }
             if cli.plugins.is_none() {
-                eprintln!("插件清单（可选）: {}", default_plugins_profile_path().display());
+                eprintln!(
+                    "插件清单（可选）: {}",
+                    default_plugins_profile_path().display()
+                );
             }
             if cli.provider.is_none() {
                 eprintln!("Provider 示例: {}", default_provider_path().display());
             }
         }
         Commands::Run { prompt, session } => {
-            let out = web_agent::gateway::run_turn(
-                &boot.app.gateway,
-                &prompt,
-                session.as_deref(),
-            )
-            .await?;
+            let out = web_agent::gateway::run_turn(&boot.app.gateway, &prompt, session.as_deref())
+                .await?;
             println!("{}", serde_json::to_string_pretty(&out)?);
         }
-        Commands::Invoke { ability, tool, args } => {
-            let args_val: serde_json::Value = serde_json::from_str(&args)
-                .map_err(|e| format!("--args 须为 JSON: {e}"))?;
+        Commands::Invoke {
+            ability,
+            tool,
+            args,
+        } => {
+            let args_val: serde_json::Value =
+                serde_json::from_str(&args).map_err(|e| format!("--args 须为 JSON: {e}"))?;
             let out = ecosystem::invoke_hook(
                 &boot.app.gateway,
                 &boot.app.expose,

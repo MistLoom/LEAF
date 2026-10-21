@@ -2,9 +2,9 @@
 
 [English](catalog-and-expose.md) · 中文
 
-`apps/` 下的场景应用分三步装配 Ability：发现源、用 `AbilityExpose` 决定加载哪些实例，再在得到的 `Gateway` 上打开 Port。
+场景应用分三步装配 Ability：发现源、用 `AbilityExpose` 决定加载哪些实例，再在得到的 `Gateway` 上打开 Port。
 
-发现路径为 `common/ability/*/ability.yml` 与 `apps/<app>/ability/*/ability.yml`。`common` 是通用能力：入口应用可以调用、监听并拦截。每条 source 带有属主应用和 `open`。进程用 `AppBuilder::app` 或 `ComposeOptions::app` 声明入口应用。调用其他应用的 Ability 要求 `open: true`。监听与拦截走 `AppHandle::control`。
+框架按约定布局发现 `ability.yml`。共享能力对入口应用可调用、可监听、可拦截。每条 source 带有属主应用和 `open`。进程用 `AppBuilder::app` 或 `ComposeOptions::app` 声明入口应用。调用其他应用的 Ability 要求 `open: true`。监听与拦截走 `AppHandle::control`。
 
 ## 协议声明
 
@@ -131,4 +131,3 @@ let app = AppBuilder::new()
 
 - [快速开始](getting-started.zh-CN.md)
 - [编写 Ability](writing-abilities.zh-CN.md)
-- 简易 Agent 示例：`apps/agent-test`

@@ -4,10 +4,10 @@ use std::sync::Arc;
 
 use ability_core::AbilityHost;
 use ability_support::{
-    host_event, AbilityEvent, BusEvent, EventClass, EventFilter, EventListener, InstanceId,
-    UserEvent, UserEventSink,
+    AbilityEvent, BusEvent, EventClass, EventFilter, EventListener, InstanceId, UserEvent,
+    UserEventSink, host_event,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tokio::sync::broadcast;
 
 /// 启动用户通道转发 + Host / 能力事件翻译 + 调试通道 SSE。
@@ -176,11 +176,8 @@ async fn translate_ability_event(host: &AbilityHost, ev: &AbilityEvent) {
                 ))
                 .await;
             }
-            host.emit_user(UserEvent::new(
-                "session.items_appended",
-                ev.payload.clone(),
-            ))
-            .await;
+            host.emit_user(UserEvent::new("session.items_appended", ev.payload.clone()))
+                .await;
         }
         _ => {}
     }

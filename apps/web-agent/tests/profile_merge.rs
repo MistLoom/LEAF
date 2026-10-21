@@ -47,10 +47,12 @@ fn vendor_npm_expands_dsh_dependencies_with_dsh_manifest() {
         .as_array()
         .expect("plugins");
     assert_eq!(plugins.len(), 1);
-    assert!(plugins[0]["path"]
-        .as_str()
-        .unwrap()
-        .ends_with("demo-dsh-plugin"));
+    assert!(
+        plugins[0]["path"]
+            .as_str()
+            .unwrap()
+            .ends_with("demo-dsh-plugin")
+    );
     assert_eq!(plugins[0]["loader"], "cordis");
 }
 
@@ -64,11 +66,7 @@ fn vendor_plugins_dir_finds_claude_mod_hooks() {
     std::fs::create_dir_all(root.join("not-a-mod")).expect("empty");
 
     let profile = tmp.path().join("profile.yaml");
-    std::fs::write(
-        &profile,
-        "claude_mod:\n  - vendor_plugins_dir: ./plugins\n",
-    )
-    .expect("profile");
+    std::fs::write(&profile, "claude_mod:\n  - vendor_plugins_dir: ./plugins\n").expect("profile");
 
     let mut doc = serde_json::json!({ "abilities": {} });
     apply_plugins_profile(&mut doc, &profile).expect("merge");
@@ -95,11 +93,7 @@ fn vendor_plugins_dir_skips_hooks_module_tier() {
     .expect("hooks.json");
 
     let profile = tmp.path().join("profile.yaml");
-    std::fs::write(
-        &profile,
-        "claude_mod:\n  - vendor_plugins_dir: ./plugins\n",
-    )
-    .expect("profile");
+    std::fs::write(&profile, "claude_mod:\n  - vendor_plugins_dir: ./plugins\n").expect("profile");
 
     let mut doc = serde_json::json!({ "abilities": {} });
     apply_plugins_profile(&mut doc, &profile).expect("merge");
@@ -122,15 +116,14 @@ fn explicit_path_to_hooks_module_fails() {
     .expect("hooks.json");
 
     let profile = tmp.path().join("profile.yaml");
-    std::fs::write(
-        &profile,
-        "claude_mod:\n  - path: ./module-mod\n",
-    )
-    .expect("profile");
+    std::fs::write(&profile, "claude_mod:\n  - path: ./module-mod\n").expect("profile");
 
     let mut doc = serde_json::json!({ "abilities": {} });
     let err = apply_plugins_profile(&mut doc, &profile).expect_err("reject");
-    assert!(err.to_string().contains("claude_mod_unsupported:hooks_modules"));
+    assert!(
+        err.to_string()
+            .contains("claude_mod_unsupported:hooks_modules")
+    );
 }
 
 #[test]
@@ -139,7 +132,10 @@ fn plugins_profile_enables_eco_abilities() {
     let profile = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("dsh/web-profile.plugins.yaml");
     let mut doc = load_assembly_document(&assembly, None).expect("assembly");
     apply_plugins_profile(&mut doc, &profile).expect("merge");
-    let abilities = doc.get("abilities").and_then(|v| v.as_object()).expect("abilities");
+    let abilities = doc
+        .get("abilities")
+        .and_then(|v| v.as_object())
+        .expect("abilities");
     assert_eq!(
         abilities.get("claude_mod").and_then(|v| v.get("enabled")),
         Some(&serde_json::json!(true))

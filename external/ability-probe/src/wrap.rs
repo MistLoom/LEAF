@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use ability_sdk::prelude::*;
 use ability_sdk::{AbilityCtx, Effect, Undo};
+use async_trait::async_trait;
 
 use crate::echo::EchoExt;
 

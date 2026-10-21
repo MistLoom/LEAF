@@ -119,7 +119,10 @@ fn current_scope() -> FeedbackScope {
 /// 供 [`feedback!`] 展开；能力代码不要直接调用。
 #[doc(hidden)]
 pub const fn assert_tag(tag: &str) {
-    assert!(!tag.is_empty() && tag.len() <= TAG_MAX, "标签须为 1..19 英文字母");
+    assert!(
+        !tag.is_empty() && tag.len() <= TAG_MAX,
+        "标签须为 1..19 英文字母"
+    );
     let b = tag.as_bytes();
     let mut i = 0;
     while i < b.len() {
@@ -149,18 +152,18 @@ fn load_file(path: &Path) -> Vec<FeedbackRecord> {
         if line.is_empty() {
             continue;
         }
-        out.push(serde_json::from_str(&line).unwrap_or_else(|e| {
-            panic!("反馈落盘损坏 {} 行 {}: {e}", path.display(), i + 1)
-        }));
+        out.push(
+            serde_json::from_str(&line)
+                .unwrap_or_else(|e| panic!("反馈落盘损坏 {} 行 {}: {e}", path.display(), i + 1)),
+        );
     }
     out
 }
 
 fn append_line(path: &Path, rec: &FeedbackRecord) {
     if let Some(dir) = path.parent() {
-        fs::create_dir_all(dir).unwrap_or_else(|e| {
-            panic!("创建反馈目录失败 {}: {e}", dir.display())
-        });
+        fs::create_dir_all(dir)
+            .unwrap_or_else(|e| panic!("创建反馈目录失败 {}: {e}", dir.display()));
     }
     let mut f = OpenOptions::new()
         .create(true)
@@ -168,34 +171,38 @@ fn append_line(path: &Path, rec: &FeedbackRecord) {
         .open(path)
         .unwrap_or_else(|e| panic!("打开反馈落盘失败 {}: {e}", path.display()));
     let line = serde_json::to_string(rec).expect("FeedbackRecord 可序列化");
-    writeln!(f, "{line}").unwrap_or_else(|e| {
-        panic!("写入反馈落盘失败 {}: {e}", path.display())
-    });
+    writeln!(f, "{line}").unwrap_or_else(|e| panic!("写入反馈落盘失败 {}: {e}", path.display()));
     f.flush()
         .unwrap_or_else(|e| panic!("刷新反馈落盘失败 {}: {e}", path.display()));
 }
 
-fn commit(rec: FeedbackRecord) {
-    let remote = FORWARD.read().expect("feedback forward").clone();
-    let procs = {
-        let mut s = state().lock().expect("feedback");
-        append_line(&s.path, &rec);
-        s.records.push(rec.clone());
-        s.processors
-            .iter()
-            .filter(|(_, _, f)| f.matches(&rec))
-            .map(|(_, p, _)| Arc::clone(p))
-            .collect::<Vec<_>>()
-    };
-    if let Some(f) = remote {
-        f(rec.clone());
-    }
+fn persist(rec: &FeedbackRecord) -> Vec<Arc<dyn FeedbackProcessor>> {
+    let mut s = state().lock().expect("feedback");
+    append_line(&s.path, rec);
+    s.records.push(rec.clone());
+    s.processors
+        .iter()
+        .filter(|(_, _, f)| f.matches(rec))
+        .map(|(_, p, _)| Arc::clone(p))
+        .collect()
+}
+
+fn notify(procs: Vec<Arc<dyn FeedbackProcessor>>, rec: &FeedbackRecord) {
     for p in procs {
         let rec = rec.clone();
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(move || {
             p.on_feedback(&rec);
         }));
     }
+}
+
+fn commit(rec: FeedbackRecord) {
+    let remote = FORWARD.read().expect("feedback forward").clone();
+    let procs = persist(&rec);
+    if let Some(f) = remote {
+        f(rec.clone());
+    }
+    notify(procs, &rec);
 }
 
 /// 供 [`feedback!`] 展开；能力代码不要直接调用。
@@ -265,9 +272,8 @@ pub fn purge() {
     let mut s = state().lock().expect("feedback");
     s.records.clear();
     if s.path.exists() {
-        fs::write(&s.path, []).unwrap_or_else(|e| {
-            panic!("清空反馈落盘失败 {}: {e}", s.path.display())
-        });
+        fs::write(&s.path, [])
+            .unwrap_or_else(|e| panic!("清空反馈落盘失败 {}: {e}", s.path.display()));
     }
 }
 
@@ -284,9 +290,10 @@ pub mod host {
         s.records = recs;
     }
 
-    /// 宿主收下客端记录，按本进程顺序落盘并通知处理器。
+    /// 宿主收下客端记录。只落盘并通知处理器，不再次转发。
     pub fn accept(record: FeedbackRecord) {
-        commit(record);
+        let procs = persist(&record);
+        notify(procs, &record);
     }
 
     pub fn install_scope(getter: fn() -> FeedbackScope) {

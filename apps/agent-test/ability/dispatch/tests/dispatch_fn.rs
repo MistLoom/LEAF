@@ -1,11 +1,11 @@
 //! catalog + tool_calls Ability ??
 
-use ai_protocol::{FunctionCall, ToolCall, ToolCallKind};
+use ability_core::AbilityHost;
 use ability_support::{
     Ability, AbilityId, AbilityManifest, FnAbility, InstanceId, LoadSpec, MethodId, MethodMeta,
     SourceId, StaticProvider,
 };
-use ability_core::AbilityHost;
+use ai_protocol::{FunctionCall, ToolCall, ToolCallKind};
 use serde_json::json;
 
 #[tokio::test]
@@ -30,11 +30,12 @@ async fn catalog_and_dispatch() {
         }],
         events: vec![],
     };
-    let add: std::sync::Arc<dyn Ability> = std::sync::Arc::new(FnAbility::new(add_meta, |args| async move {
-        let a = args["a"].as_f64().unwrap_or(0.0);
-        let b = args["b"].as_f64().unwrap_or(0.0);
-        Ok(json!({ "sum": a + b }))
-    }));
+    let add: std::sync::Arc<dyn Ability> =
+        std::sync::Arc::new(FnAbility::new(add_meta, |args| async move {
+            let a = args["a"].as_f64().unwrap_or(0.0);
+            let b = args["b"].as_f64().unwrap_or(0.0);
+            Ok(json!({ "sum": a + b }))
+        }));
 
     let host = AbilityHost::new();
     host.install_str("algo.add", std::sync::Arc::new(StaticProvider::new(add)))

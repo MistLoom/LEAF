@@ -8,8 +8,8 @@ use quote::{format_ident, quote};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::{
-    parse_macro_input, parse_quote, FnArg, ItemTrait, LitStr, Result as SynResult, Token, TraitItem,
-    Type,
+    FnArg, ItemTrait, LitStr, Result as SynResult, Token, TraitItem, Type, parse_macro_input,
+    parse_quote,
 };
 
 struct ClientArgs {
@@ -95,7 +95,9 @@ fn expand(
     krate: syn::Path,
 ) -> SynResult<proc_macro2::TokenStream> {
     let mut trait_item = trait_item;
-    trait_item.attrs.push(parse_quote!(#[allow(dead_code, async_fn_in_trait)]));
+    trait_item
+        .attrs
+        .push(parse_quote!(#[allow(dead_code, async_fn_in_trait)]));
     let trait_ident = &trait_item.ident;
     let vis = &trait_item.vis;
     let id_lit = &args.id;

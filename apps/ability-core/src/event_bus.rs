@@ -7,12 +7,12 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
-use async_trait::async_trait;
 use ability_support::{
     AbilityEvent, BusEvent, EventFilter, EventHandler, EventListener, EventMiddleware, EventNext,
     EventOpts, EventPipeline, EventReg, EventSink, EventUnreg, HostEvent, Result, UserEvent,
     UserEventSink,
 };
+use async_trait::async_trait;
 use serde::Serialize;
 use tokio::sync::mpsc;
 
@@ -187,7 +187,8 @@ impl EventBus {
     }
 
     pub async fn listen(&self, filter: EventFilter) -> ChannelListener {
-        self.listen_where(filter, Arc::new(|_: &BusEvent| true)).await
+        self.listen_where(filter, Arc::new(|_: &BusEvent| true))
+            .await
     }
 
     /// 与 [`listen`] 相同，额外丢弃 `allow` 为假的事件。

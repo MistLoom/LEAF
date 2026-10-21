@@ -2,6 +2,9 @@ config/agent_test.provider.yaml
 .refer_bak
 /config
 /data
+apps/ability-core/data/
+**/__pycache__/
+**/*.pyc
 target
 /scripts
 /docs

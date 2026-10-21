@@ -4,7 +4,7 @@
 
 ## 模型
 
-**应用**拥有自己的 Ability，路径为 `apps/<app>/ability/<name>`。外部门户与跨能力调用共用同一条 **Gateway** 信封：`instance + method + args`。
+**应用**拥有自己的 Ability。外部门户与跨能力调用共用同一条 **Gateway** 信封：`instance + method + args`。
 
 ```
 Ports (CLI / HTTP / MCP / Fun / …)
@@ -22,37 +22,28 @@ Ports (CLI / HTTP / MCP / Fun / …)
 
 ## 分层
 
-| 层 | 路径 | 职责 |
-|---|---|---|
-| 契约 | `frame/support` | Manifest、Ctx、生命周期、`#[client]` |
-| 传输 | `frame/core`、`frame/port-*` | Gateway、Port、Expose、控制器 |
-| 引擎 | `apps/ability-core` | Host、EventBus、调用与事件准入 |
-| 组合 | `frame/compose` | Catalog、Bootstrap、`AppControl` |
-| 能力 | `common/ability/*`、`apps/<app>/ability/*` | 通用能力，或归属某个场景应用 |
-| 应用 | `apps/*` | 场景进程（`agent-test`、`web-agent`） |
-| 外部 SDK | `external/*` | 实验性的仓外编写面 |
-
-## 归属
-
-| 归属 | Ability |
+| 层 | 职责 |
 |---|---|
-| `common` | 通用能力（配置、存储、文件、shell、任务、知识库及参考示例），以及可选的 `claude_mod`、`dsh_plugin`。`open`。入口应用可以调用、监听并拦截 |
-| `agent-test` | Agent 回路（`session`、`turn`、`dispatch`、`chat`、`prompt`、`skill`），`open` |
-| `web-agent` | Web 参考应用。兼容夹具在其测试中 |
+| 契约 | Manifest、Ctx、生命周期、客户端生成 |
+| 传输 | Gateway、Port、Expose、控制器 |
+| 引擎 | Host、事件总线、调用与事件准入 |
+| 组合 | 目录发现、启动装配、`AppControl` |
+| 能力 | 可复用或归属某一应用的能力实现 |
+| 应用 | 场景进程与装配策略 |
+
+Node / Python 能力通过 **Guest 线协议** 接入，声明模型与 Rust 共用 `ability.yml`。见 [Guest 协议](ability-guest-protocol.zh-CN.md)。
+
+## 可见性与治理
+
+- **共享能力**：对入口应用开放调用、监听与拦截（具体集合由装配决定）。
+- **应用自有能力**：默认仅属主可调用；`open: true` 时允许其他应用调用或监听。
+- **仓外能力包**：通过 Guest SDK 与线协议接入，不直接链接运行时内核。
 
 ## 约束
 
-1. Port 只依赖 `Gateway`，不直接调用 Ability crate
+1. Port 只依赖 `Gateway`，不直接调用 Ability 实现
 2. Ability 不按「来自 MCP / CLI / LLM tools」分支
 3. Expose 只裁 **Port → Gateway**；它不授予跨应用调用
 4. 跨应用调用要求目标 `open: true`
-5. 拦截属于属主应用。`common` 能力可由入口应用拦截。监听其他场景应用的 Ability 要求目标 `open: true`
+5. 拦截属于属主应用；监听其他应用能力要求目标 `open: true`
 6. 协议身份属于声明与 Port，而不是内核业务类型
-7. `external` 等仓外包不得依赖 `frame-core`、port 或 `ability-core`；消费运行时只依赖 `frame-compose`（由其再导出所需类型）
-
-## 状态
-
-- `external/` 为实验性
-- 计划支持多语言 Ability（Python、TypeScript 等）；当前以 Rust 为主
-- `apps/agent-test` 为简易 Agent 示例
-- `apps/web-agent` 为 Web 参考应用

@@ -7,8 +7,8 @@ use tokio::sync::RwLock;
 use crate::error::SessionError;
 use crate::ext::merge_ext;
 use crate::model::{
-    now_ms, AppendOutcome, Conversation, ConversationId, ConversationPatch, ConversationStatus,
-    ItemDraft, ItemId, ItemPatch, SessionItem, TagScope, TagSet, TagStat,
+    AppendOutcome, Conversation, ConversationId, ConversationPatch, ConversationStatus, ItemDraft,
+    ItemId, ItemPatch, SessionItem, TagScope, TagSet, TagStat, now_ms,
 };
 use crate::query::{ConversationQuery, ItemQuery, Page, SortOrder};
 use crate::run::{Run, RunId, RunPatch, RunQuery, RunStatus};
@@ -145,7 +145,8 @@ fn sort_convs(items: &mut [Conversation], order: SortOrder) {
         SortOrder::TitleAsc => {
             let ta = a.title.as_deref().unwrap_or("");
             let tb = b.title.as_deref().unwrap_or("");
-            ta.cmp(tb).then_with(|| a.id.to_string().cmp(&b.id.to_string()))
+            ta.cmp(tb)
+                .then_with(|| a.id.to_string().cmp(&b.id.to_string()))
         }
     });
 }
@@ -401,8 +402,9 @@ impl ConversationStore for MemoryStore {
             let mut created = 0usize;
             for draft in drafts {
                 if let Some(cid) = &draft.client_id {
-                    if let Some(found) =
-                        existing.iter().find(|i| i.client_id.as_deref() == Some(cid))
+                    if let Some(found) = existing
+                        .iter()
+                        .find(|i| i.client_id.as_deref() == Some(cid))
                     {
                         if found.body != draft.body {
                             return Err(SessionError::conflict(format!("client_id 冲突: {cid}")));
@@ -462,7 +464,9 @@ impl ConversationStore for MemoryStore {
         let limit = query.limit.map(|n| n as usize);
         let next = if let Some(lim) = limit {
             if matched.len() > lim {
-                let next_seq = matched.get(lim.saturating_sub(1)).map(|i| i.seq.to_string());
+                let next_seq = matched
+                    .get(lim.saturating_sub(1))
+                    .map(|i| i.seq.to_string());
                 matched.truncate(lim);
                 next_seq
             } else {
@@ -717,9 +721,7 @@ impl MemoryStore {
             .enumerate()
             .map(|(idx, item)| {
                 let new_item_id = id_map.get(&item.id).cloned().unwrap_or_else(ItemId::new);
-                let parent = item
-                    .parent_item
-                    .and_then(|p| id_map.get(&p).cloned());
+                let parent = item.parent_item.and_then(|p| id_map.get(&p).cloned());
                 SessionItem {
                     id: new_item_id,
                     seq: (idx as u64) + 1,

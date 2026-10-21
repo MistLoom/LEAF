@@ -170,7 +170,8 @@ impl AbilitySpec {
 
     /// 只声明方法，实现放在自定义 `Ability`。
     pub fn method(mut self, id: &str, description: &str, input_schema: Value) -> Self {
-        self.methods.push(MethodMeta::new(id, description, input_schema));
+        self.methods
+            .push(MethodMeta::new(id, description, input_schema));
         self
     }
 

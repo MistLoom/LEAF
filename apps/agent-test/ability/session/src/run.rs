@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::ext::{MetricMap, RefMap};
-use crate::model::{now_ms, ConversationId};
+use crate::model::{ConversationId, now_ms};
 
 /// 回合标识（会话内一次进行中的工作单元，不绑定具体执行者类型）。
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

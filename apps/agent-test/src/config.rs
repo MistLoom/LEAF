@@ -3,14 +3,15 @@
 use std::path::Path;
 
 use frame_core::{AbilityExpose, Error, Result};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub fn load_expose(path: impl AsRef<Path>) -> Result<AbilityExpose> {
     let raw = std::fs::read_to_string(path.as_ref())
         .map_err(|e| Error::config(format!("读取 expose 失败: {e}")))?;
-    AbilityExpose::from_value(&serde_yaml::from_str::<Value>(&raw).map_err(|e| {
-        Error::config(format!("解析 expose 失败: {e}"))
-    })?)
+    AbilityExpose::from_value(
+        &serde_yaml::from_str::<Value>(&raw)
+            .map_err(|e| Error::config(format!("解析 expose 失败: {e}")))?,
+    )
 }
 
 pub fn load_provider(path: impl AsRef<Path>) -> Result<Value> {

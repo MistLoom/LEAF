@@ -5,24 +5,24 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{
+    Router,
     extract::{Path, State},
     response::{
-        sse::{Event, KeepAlive, Sse},
         Html, IntoResponse, Json,
+        sse::{Event, KeepAlive, Sse},
     },
     routing::{get, post},
-    Router,
 };
-use futures_util::future::ready;
 use futures_util::StreamExt;
+use futures_util::future::ready;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tokio_stream::wrappers::BroadcastStream;
 
+use crate::diagnose_runtime;
 use crate::gateway::{invoke, run_turn};
 use crate::persist;
 use crate::web::WebState;
-use crate::diagnose_runtime;
 
 pub fn static_router() -> Router<Arc<WebState>> {
     Router::new()
@@ -53,16 +53,28 @@ async fn index() -> Html<&'static str> {
 }
 
 async fn style() -> impl IntoResponse {
-    ([(axum::http::header::CONTENT_TYPE, "text/css; charset=utf-8")], include_str!("../../web/style.css"))
+    (
+        [(axum::http::header::CONTENT_TYPE, "text/css; charset=utf-8")],
+        include_str!("../../web/style.css"),
+    )
 }
 
 async fn script() -> impl IntoResponse {
-    ([(axum::http::header::CONTENT_TYPE, "application/javascript; charset=utf-8")], include_str!("../../web/app.js"))
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/javascript; charset=utf-8",
+        )],
+        include_str!("../../web/app.js"),
+    )
 }
 
 async fn vendor_marked() -> impl IntoResponse {
     (
-        [(axum::http::header::CONTENT_TYPE, "application/javascript; charset=utf-8")],
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/javascript; charset=utf-8",
+        )],
         include_str!("../../web/vendor/marked.min.js"),
     )
 }
@@ -99,7 +111,10 @@ async fn ecosystem_inventory(State(st): State<Arc<WebState>>) -> Result<Json<Val
     let eco = crate::eco_visibility::fetch_eco_dispatch_tools(st.gateway())
         .await
         .map_err(ApiError)?;
-    Ok(Json(crate::eco_visibility::build_inventory(&st.rt.expose, &eco)))
+    Ok(Json(crate::eco_visibility::build_inventory(
+        &st.rt.expose,
+        &eco,
+    )))
 }
 
 #[derive(Deserialize)]
@@ -176,11 +191,7 @@ async fn list_sessions(State(st): State<Arc<WebState>>) -> Result<Json<Value>, A
     let items = invoke(st.gateway(), "session", "list", json!({ "limit": 100 }))
         .await
         .map_err(ApiError)?;
-    let list = if items.is_array() {
-        items
-    } else {
-        json!([])
-    };
+    let list = if items.is_array() { items } else { json!([]) };
     Ok(Json(json!({ "items": list })))
 }
 

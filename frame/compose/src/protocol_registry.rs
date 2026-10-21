@@ -4,13 +4,13 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use ability_support::{
-    load_ability_package, AbilityPackageMeta, CatalogEntry, GrpcInfo, McpInfo, SkillInfo, ToolsInfo,
-};
 use ability_core::AbilityHost;
+use ability_support::{
+    AbilityPackageMeta, CatalogEntry, GrpcInfo, McpInfo, SkillInfo, ToolsInfo, load_ability_package,
+};
 use frame_core::{AccessKind, Gateway};
 
-use crate::catalog::{resolve_protocols, WorkspaceCatalog};
+use crate::catalog::{WorkspaceCatalog, resolve_protocols};
 
 /// 全局协议注册表（组合根持有）。
 #[derive(Clone, Default)]
@@ -57,9 +57,17 @@ impl ProtocolRegistry {
         self.packages.get(instance_id)
     }
 
-    pub fn supports(&self, instance_id: &str, kind: AccessKind, catalog: &WorkspaceCatalog) -> bool {
+    pub fn supports(
+        &self,
+        instance_id: &str,
+        kind: AccessKind,
+        catalog: &WorkspaceCatalog,
+    ) -> bool {
         if let Some(pkg) = self.packages.get(instance_id) {
-            return pkg.protocols.iter().any(|p| AccessKind::from_protocol(*p) == Some(kind));
+            return pkg
+                .protocols
+                .iter()
+                .any(|p| AccessKind::from_protocol(*p) == Some(kind));
         }
         if let Some(entry) = catalog.get(instance_id) {
             return resolve_protocols(&entry.root).contains(&kind);
@@ -68,26 +76,17 @@ impl ProtocolRegistry {
     }
 
     pub fn mcp_tools(&self, catalog: &[CatalogEntry]) -> Vec<McpToolEntry> {
-        catalog
-            .iter()
-            .map(|e| self.project_mcp_entry(e))
-            .collect()
+        catalog.iter().map(|e| self.project_mcp_entry(e)).collect()
     }
 
     pub fn llm_tools(&self, catalog: &[CatalogEntry]) -> Vec<McpToolEntry> {
-        catalog
-            .iter()
-            .map(|e| self.project_llm_entry(e))
-            .collect()
+        catalog.iter().map(|e| self.project_llm_entry(e)).collect()
     }
 
     fn project_mcp_entry(&self, e: &CatalogEntry) -> McpToolEntry {
         let overrides = self.mcp.get(e.instance.as_str());
-        let tool = overrides.and_then(|m| {
-            m.tools
-                .iter()
-                .find(|t| t.method == e.method.to_string())
-        });
+        let tool =
+            overrides.and_then(|m| m.tools.iter().find(|t| t.method == e.method.to_string()));
         McpToolEntry {
             instance: e.instance.to_string(),
             method: e.method.to_string(),
@@ -102,11 +101,8 @@ impl ProtocolRegistry {
 
     fn project_llm_entry(&self, e: &CatalogEntry) -> McpToolEntry {
         let overrides = self.tools.get(e.instance.as_str());
-        let tool = overrides.and_then(|m| {
-            m.tools
-                .iter()
-                .find(|t| t.method == e.method.to_string())
-        });
+        let tool =
+            overrides.and_then(|m| m.tools.iter().find(|t| t.method == e.method.to_string()));
         McpToolEntry {
             instance: e.instance.to_string(),
             method: e.method.to_string(),
@@ -154,6 +150,9 @@ pub fn any_supports_gate(
         .any(|id| registry.supports(id, gate, catalog))
 }
 
-pub fn build_tool_index(gateway: Arc<dyn Gateway>, registry: &ProtocolRegistry) -> Vec<McpToolEntry> {
+pub fn build_tool_index(
+    gateway: Arc<dyn Gateway>,
+    registry: &ProtocolRegistry,
+) -> Vec<McpToolEntry> {
     registry.mcp_tools(&gateway.catalog())
 }

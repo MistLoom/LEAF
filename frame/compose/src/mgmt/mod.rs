@@ -2,4 +2,4 @@
 
 mod routes;
 
-pub use routes::{router, MgmtState};
+pub use routes::{MgmtState, router};

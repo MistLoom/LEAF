@@ -6,7 +6,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use clap::{Parser, Subcommand};
 use frame_core::{
-    resolve_target, DefaultCliController, Error, Gateway, LocalsScope, Port, ProtocolController,
+    DefaultCliController, Error, Gateway, LocalsScope, Port, ProtocolController, resolve_target,
 };
 use serde_json::Value;
 
@@ -126,8 +126,8 @@ impl CliPort {
         session: Option<&str>,
     ) -> Result<(), Error> {
         let (inst, method) = resolve_target(target, &gateway.catalog())?;
-        let args: Value =
-            serde_json::from_str(args).map_err(|e| Error::config(format!("参数 JSON 无效: {e}")))?;
+        let args: Value = serde_json::from_str(args)
+            .map_err(|e| Error::config(format!("参数 JSON 无效: {e}")))?;
         let locals = match session {
             Some(s) => Some(
                 s.parse::<LocalsScope>()

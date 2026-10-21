@@ -14,9 +14,11 @@ fn surfaces_are_mappable() {
             "契约表未纳入 is_mapped_outbound: {ns}.{method}"
         );
     }
-    assert!(mod_outbound_surfaces()
-        .iter()
-        .any(|(ns, method)| *ns == "session" && *method == "usage"));
+    assert!(
+        mod_outbound_surfaces()
+            .iter()
+            .any(|(ns, method)| *ns == "session" && *method == "usage")
+    );
 }
 
 #[test]

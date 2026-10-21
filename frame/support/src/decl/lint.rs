@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::ability::AbilityDecl;
+use super::ability::{AbilityDecl, RuntimeKind};
 use super::package::AbilityPackageMeta;
 use super::protocol::ProtocolKind;
 use crate::manifest::EventDir;
@@ -71,7 +71,8 @@ pub fn lint_ability_package(meta: &AbilityPackageMeta, opts: &LintOptions) -> Li
     lint_protocols(decl, &method_ids, meta, &mut errors);
     lint_depends(decl, opts, &mut errors);
     lint_factory_config(decl, &mut errors);
-    if opts.check_logic_modules && decl.uses_handlers() {
+    lint_runtime(meta, &mut errors);
+    if opts.check_logic_modules && decl.uses_handlers() && meta.runtime_kind == RuntimeKind::Rust {
         lint_logic_modules(meta.root.as_path(), decl, &mut errors);
     }
     if opts.scan_emit_in_source {
@@ -96,11 +97,15 @@ pub fn lint_ability_package(meta: &AbilityPackageMeta, opts: &LintOptions) -> Li
 
 /// 发现 workspace 下全部能力根目录。
 ///
-/// - `common/ability/<name>/ability.yml`：通用能力
+/// - `common/abilitys/<category>/<name>/ability.yml`：通用能力
 /// - `apps/<app>/ability/<name>/ability.yml`：场景应用自有能力
 pub fn discover_ability_roots(workspace: &Path) -> Vec<PathBuf> {
     let mut roots = Vec::new();
-    collect_ability_roots(&workspace.join("common").join("ability"), workspace, &mut roots);
+    collect_ability_roots(
+        &workspace.join("common").join("abilitys"),
+        workspace,
+        &mut roots,
+    );
     let apps_dir = workspace.join("apps");
     if let Ok(apps) = fs::read_dir(&apps_dir) {
         for app in apps.flatten() {
@@ -130,19 +135,18 @@ fn collect_ability_roots(ability_dir: &Path, workspace: &Path, roots: &mut Vec<P
         }
         if path.join("ability.yml").is_file() {
             roots.push(path);
+        } else {
+            collect_ability_roots(&path, workspace, roots);
         }
     }
 }
 
 /// 加载并校验 workspace 内全部能力声明。
-pub fn lint_workspace(
-    workspace: &Path,
-    opts: &LintOptions,
-) -> Result<Vec<LintReport>, String> {
+pub fn lint_workspace(workspace: &Path, opts: &LintOptions) -> Result<Vec<LintReport>, String> {
     let roots = discover_ability_roots(workspace);
     if roots.is_empty() {
         return Err(format!(
-            "未在 {} 下发现 common/ability 或 apps/*/ability",
+            "未在 {} 下发现 common/abilitys 或 apps/*/ability",
             workspace.display()
         ));
     }
@@ -174,7 +178,11 @@ pub fn assert_clean_reports(reports: &[LintReport]) -> Result<(), String> {
             lines.push(format!("{} ({}): {e}", r.root.display(), r.ability_id));
         }
         for w in &r.warnings {
-            lines.push(format!("{} ({}): [warn] {w}", r.root.display(), r.ability_id));
+            lines.push(format!(
+                "{} ({}): [warn] {w}",
+                r.root.display(),
+                r.ability_id
+            ));
         }
     }
     let has_error = reports.iter().any(|r| !r.errors.is_empty());
@@ -182,6 +190,10 @@ pub fn assert_clean_reports(reports: &[LintReport]) -> Result<(), String> {
         return Err(lines.join("\n"));
     }
     Ok(())
+}
+
+fn lint_runtime(meta: &AbilityPackageMeta, errors: &mut Vec<String>) {
+    super::runtime_resolve::lint_runtime_artifacts(&meta.root, meta.runtime_kind, errors);
 }
 
 fn lint_protocols(

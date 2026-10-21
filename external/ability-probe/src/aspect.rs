@@ -3,8 +3,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use async_trait::async_trait;
 use ability_sdk::{AbilityCtx, Aspect, Next, Result};
+use async_trait::async_trait;
 use serde_json::json;
 
 pub struct TraceAspect {

@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use frame_core::{
-    resolve_target, CatalogEntry, DefaultFunController, Error, Gateway, InstanceId, InvokeResponse,
-    LocalsScope, MethodId, ProtocolController,
+    CatalogEntry, DefaultFunController, Error, Gateway, InstanceId, InvokeResponse, LocalsScope,
+    MethodId, ProtocolController, resolve_target,
 };
 use serde_json::Value;
 

@@ -1,6 +1,6 @@
 //! chat HTTP 适配单元测试。
 
-use ai_protocol::{ChatClient, ChatCompletionRequest, Message, HttpChatClient, HttpChatConfig};
+use ai_protocol::{ChatClient, ChatCompletionRequest, HttpChatClient, HttpChatConfig, Message};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -28,10 +28,7 @@ async fn http_chat_completion_parses_response() {
         path: "/v1/chat/completions".into(),
     });
     let resp = client
-        .chat_completion(ChatCompletionRequest::new(
-            "m",
-            vec![Message::user("hi")],
-        ))
+        .chat_completion(ChatCompletionRequest::new("m", vec![Message::user("hi")]))
         .await
         .unwrap();
     assert_eq!(

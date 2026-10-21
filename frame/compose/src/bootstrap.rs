@@ -5,20 +5,20 @@ use std::sync::{Arc, RwLock};
 
 use ability_core::AbilityHost;
 use ability_support::{
-    host_event, BusEvent, EventClass, EventFilter, EventHandler, EventOpts, EventSink,
+    BusEvent, EventClass, EventFilter, EventHandler, EventOpts, EventSink, host_event,
 };
 use frame_core::{AbilityExpose, Gateway};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::app_control::AppControl;
 use crate::catalog::WorkspaceCatalog;
 use crate::compose::{
-    apply_expose_delta, bind_app_scope, install_providers, load_exposed, reload_one, ComposeOptions,
-    LoadOpts,
+    ComposeOptions, LoadOpts, apply_expose_delta, bind_app_scope, install_providers, load_exposed,
+    reload_one,
 };
 use crate::config::ConfigCatalog;
 use crate::expose::ToolHost;
-use crate::host_lifecycle::{apply_registrations, on_host_message, HostRegistration};
+use crate::host_lifecycle::{HostRegistration, apply_registrations, on_host_message};
 use crate::load_order::topo_sort;
 use crate::protocol_registry::ProtocolRegistry;
 
@@ -106,25 +106,15 @@ impl AppBuilder {
     }
 
     /// 登记 Host 系统事件处理（middleware / pipeline / parallel / message）。
-    pub fn on_host(
-        mut self,
-        filter: EventFilter,
-        handler: EventHandler,
-        opts: EventOpts,
-    ) -> Self {
+    pub fn on_host(mut self, filter: EventFilter, handler: EventHandler, opts: EventOpts) -> Self {
         self.host_registrations
             .push(crate::host_lifecycle::on_host(filter, handler, opts));
         self
     }
 
     /// `message` 模式快捷登记。
-    pub fn on_host_message(
-        mut self,
-        filter: EventFilter,
-        sink: Arc<dyn EventSink>,
-    ) -> Self {
-        self.host_registrations
-            .push(on_host_message(filter, sink));
+    pub fn on_host_message(mut self, filter: EventFilter, sink: Arc<dyn EventSink>) -> Self {
+        self.host_registrations.push(on_host_message(filter, sink));
         self
     }
 
@@ -213,11 +203,18 @@ impl AppHandle {
         AppControl::from_catalog(&app, &self.catalog, self.host.clone())
     }
 
-    pub async fn apply_expose_delta(&self, old: &AbilityExpose, new: &AbilityExpose) -> Result<(), ability_support::Error> {
+    pub async fn apply_expose_delta(
+        &self,
+        old: &AbilityExpose,
+        new: &AbilityExpose,
+    ) -> Result<(), ability_support::Error> {
         apply_expose_delta(&self.host, &self.catalog, old, new).await
     }
 
-    pub async fn reload_all(&self, expose: &AbilityExpose) -> Result<Vec<String>, ability_support::Error> {
+    pub async fn reload_all(
+        &self,
+        expose: &AbilityExpose,
+    ) -> Result<Vec<String>, ability_support::Error> {
         use std::collections::BTreeSet;
         let loaded: BTreeSet<String> = self
             .host
@@ -237,7 +234,12 @@ impl AppHandle {
         for id in &unload_order {
             let iid = ability_support::InstanceId::new(id)
                 .map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
-            if self.host.catalog().iter().any(|e| e.instance.as_str() == id.as_str()) {
+            if self
+                .host
+                .catalog()
+                .iter()
+                .any(|e| e.instance.as_str() == id.as_str())
+            {
                 self.host.unload(&iid).await?;
             }
         }

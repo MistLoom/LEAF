@@ -54,9 +54,7 @@ impl Port for HttpPort {
 
     async fn serve(self: Box<Self>, gateway: Arc<dyn Gateway>) -> Result<(), Error> {
         let app = Self::router_with(gateway, self.controller);
-        let listener = TcpListener::bind(self.bind)
-            .await
-            .map_err(Error::from)?;
+        let listener = TcpListener::bind(self.bind).await.map_err(Error::from)?;
         info!(%self.bind, "http port listening");
         axum::serve(listener, app).await.map_err(Error::from)?;
         Ok(())

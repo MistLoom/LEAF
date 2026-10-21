@@ -23,7 +23,9 @@ pub fn decode_text_bytes(bytes: &[u8]) -> String {
     }
 
     if std::str::from_utf8(bytes).is_ok() {
-        return std::str::from_utf8(bytes).expect("utf-8 checked").to_string();
+        return std::str::from_utf8(bytes)
+            .expect("utf-8 checked")
+            .to_string();
     }
 
     // 无 BOM 的 UTF-16 LE（ASCII 文本在 PowerShell 中常为此形态）
@@ -58,16 +60,16 @@ pub fn decode_text_bytes_strict(bytes: &[u8]) -> Result<String, String> {
     };
 
     if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE {
-        return try_decode_utf16(&bytes[2..], true)
-            .ok_or_else(|| "UTF-16 LE 解码失败".into());
+        return try_decode_utf16(&bytes[2..], true).ok_or_else(|| "UTF-16 LE 解码失败".into());
     }
     if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
-        return try_decode_utf16(&bytes[2..], false)
-            .ok_or_else(|| "UTF-16 BE 解码失败".into());
+        return try_decode_utf16(&bytes[2..], false).ok_or_else(|| "UTF-16 BE 解码失败".into());
     }
 
     if std::str::from_utf8(bytes).is_ok() {
-        return Ok(std::str::from_utf8(bytes).expect("utf-8 checked").to_string());
+        return Ok(std::str::from_utf8(bytes)
+            .expect("utf-8 checked")
+            .to_string());
     }
 
     if looks_like_utf16_le(bytes) {

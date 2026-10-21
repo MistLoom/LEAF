@@ -1,11 +1,11 @@
 //! 回合循环核心逻辑。
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-use ai_protocol::{repair_tool_call_chain, ChatCompletionResponse, Message, ToolCall};
 use ability_support::{AbilityCtx, Error, MethodId, Result};
-use serde_json::{json, Value};
+use ai_protocol::{ChatCompletionResponse, Message, ToolCall, repair_tool_call_chain};
+use serde_json::{Value, json};
 
 fn m(id: &str) -> MethodId {
     MethodId::new(id).expect("method id")
@@ -225,7 +225,9 @@ async fn resolve_session_id(ctx: &dyn AbilityCtx, input: &RunInput) -> Result<St
             .map(str::to_string)
             .ok_or_else(|| Error::failed("session.create 未返回 id"));
     }
-    Err(Error::invalid_args("缺少 session_id，或设 create_session=true"))
+    Err(Error::invalid_args(
+        "缺少 session_id，或设 create_session=true",
+    ))
 }
 
 async fn build_system(
@@ -248,14 +250,18 @@ async fn build_system(
     }
     match ctx.call("prompt", &m("build"), args).await {
         Ok(msgs) => {
-            let arr = msgs.as_array().ok_or_else(|| Error::failed("prompt.build 非数组"))?;
+            let arr = msgs
+                .as_array()
+                .ok_or_else(|| Error::failed("prompt.build 非数组"))?;
             let sys = arr
                 .iter()
                 .find(|m| m.get("role") == Some(&json!("system")))
                 .and_then(|m| m.get("content"))
-                .and_then(|c| c.as_str().map(str::to_string).or_else(|| {
-                    c.get("text").and_then(Value::as_str).map(str::to_string)
-                }));
+                .and_then(|c| {
+                    c.as_str()
+                        .map(str::to_string)
+                        .or_else(|| c.get("text").and_then(Value::as_str).map(str::to_string))
+                });
             Ok(sys.or_else(|| config.system_prompt.clone()))
         }
         Err(e) => Err(e),
@@ -277,14 +283,16 @@ async fn fetch_messages(ctx: &dyn AbilityCtx, session_id: &str) -> Result<Vec<Me
 }
 
 fn calls_for_event(calls: &[ToolCall]) -> Value {
-    json!(calls
-        .iter()
-        .map(|c| json!({
-            "id": c.id,
-            "name": c.function.name,
-            "arguments": c.function.arguments,
-        }))
-        .collect::<Vec<_>>())
+    json!(
+        calls
+            .iter()
+            .map(|c| json!({
+                "id": c.id,
+                "name": c.function.name,
+                "arguments": c.function.arguments,
+            }))
+            .collect::<Vec<_>>()
+    )
 }
 
 pub struct SpawnInput {
@@ -309,11 +317,7 @@ pub async fn spawn_turn(
     input: SpawnInput,
 ) -> Result<SpawnOutput> {
     let fork = ctx
-        .call(
-            "session",
-            &m("fork"),
-            json!({ "id": input.session_id }),
-        )
+        .call("session", &m("fork"), json!({ "id": input.session_id }))
         .await?;
     let child_id = fork
         .get("id")

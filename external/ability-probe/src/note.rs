@@ -2,11 +2,11 @@
 
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use ability_sdk::prelude::*;
 use ability_sdk::{
     Ability, AbilityId, AbilityManifest, EventDecl, EventDir, FactoryProvider, MethodId, MethodMeta,
 };
+use async_trait::async_trait;
 
 pub fn note_provider() -> Arc<dyn AbilityProvider> {
     FactoryProvider::new(note_manifest(), |config| async move {

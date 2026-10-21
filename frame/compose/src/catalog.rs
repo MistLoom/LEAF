@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use ability_support::{discover_ability_roots, load_ability_package, ProtocolKind};
+use ability_support::{ProtocolKind, discover_ability_roots, load_ability_package};
 use frame_core::AccessKind;
 
 /// 非运行时能力目录（有声明但不编入 Provider 注册表）。
@@ -43,10 +43,13 @@ pub struct WorkspaceCatalog {
 }
 
 impl WorkspaceCatalog {
-    /// 扫描 `common/ability` 与 `apps/*/ability`，并标记 linked 状态。
+    /// 扫描 `common/abilitys` 与 `apps/*/ability`，并标记 linked 状态。
     pub fn discover() -> Self {
         let ws = workspace_root();
-        let linked: BTreeSet<String> = crate::registry::linked_ids().into_iter().map(String::from).collect();
+        let linked: BTreeSet<String> = crate::registry::linked_ids()
+            .into_iter()
+            .map(String::from)
+            .collect();
         let mut sources = Vec::new();
 
         for root in discover_ability_roots(&ws) {
@@ -110,7 +113,7 @@ impl WorkspaceCatalog {
     }
 }
 
-/// `common/ability/...` 归属 `common`；`apps/<app>/ability/...` 归属该应用。
+/// `common/abilitys/...` 归属 `common`；`apps/<app>/ability/...` 归属该应用。
 pub fn owner_app(rel: &str) -> String {
     let mut parts = rel.split('/');
     match parts.next() {
@@ -138,7 +141,11 @@ pub fn resolve_protocols(ability_root: &Path) -> Vec<AccessKind> {
 }
 
 /// 注册实例协议支持到 Host。
-pub fn register_protocol_support(host: &ability_core::AbilityHost, instance: &str, ability_root: &Path) {
+pub fn register_protocol_support(
+    host: &ability_core::AbilityHost,
+    instance: &str,
+    ability_root: &Path,
+) {
     let kinds = resolve_protocols(ability_root);
     host.set_protocol_support(instance, kinds);
 }

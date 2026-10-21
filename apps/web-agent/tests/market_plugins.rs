@@ -15,13 +15,11 @@ fn vendor_dir() -> PathBuf {
 }
 
 fn node_ok() -> bool {
-    std::process::Command::new(
-        std::env::var("LEAF_PLUGIN_NODE").unwrap_or_else(|_| "node".into()),
-    )
-    .arg("--version")
-    .status()
-    .map(|s| s.success())
-    .unwrap_or(false)
+    std::process::Command::new(std::env::var("LEAF_PLUGIN_NODE").unwrap_or_else(|_| "node".into()))
+        .arg("--version")
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
 }
 
 fn market_expose() -> Result<Option<AbilityExpose>, frame_core::Error> {
@@ -86,7 +84,9 @@ async fn official_learning_output_style_session_start() {
         .expect("invoke");
     let body = resp.data.to_string();
     assert!(
-        body.contains("learning") || body.contains("additionalContext") || body.contains("hookSpecificOutput"),
+        body.contains("learning")
+            || body.contains("additionalContext")
+            || body.contains("hookSpecificOutput"),
         "官方 learning-output-style 应返回上下文: {body}"
     );
 }
@@ -106,16 +106,22 @@ async fn market_profile_doctor_ok() {
         Err(e) => panic!("{e}"),
     };
     let boot = bootstrap_expose(expose).await.expect("bootstrap");
-    let report = web_agent::diagnose(&web_agent::WebBoot {
-        app: boot.app,
-    })
-    .await
-    .expect("doctor");
+    let report = web_agent::diagnose(&web_agent::WebBoot { app: boot.app })
+        .await
+        .expect("doctor");
     if let Some(m) = report.get("claude_mod") {
-        assert_eq!(m.get("ok").and_then(|v| v.as_bool()), Some(true), "{report}");
+        assert_eq!(
+            m.get("ok").and_then(|v| v.as_bool()),
+            Some(true),
+            "{report}"
+        );
     }
     if let Some(d) = report.get("dsh_plugin") {
-        assert_eq!(d.get("ok").and_then(|v| v.as_bool()), Some(true), "{report}");
+        assert_eq!(
+            d.get("ok").and_then(|v| v.as_bool()),
+            Some(true),
+            "{report}"
+        );
     }
 }
 

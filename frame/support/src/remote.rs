@@ -2,6 +2,9 @@
 //!
 //! 一行一帧 JSON。能力实现仍只见 `Ability` / `AbilityCtx`。
 
+/// 线协议版本（与 `framework_version` 独立）。
+pub const PROTOCOL_VERSION: &str = "1";
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

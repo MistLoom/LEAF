@@ -45,9 +45,10 @@ fn common_ability_is_controllable_by_the_host_app() {
     };
     assert!(host.authorize_port("read_file").is_ok());
     assert!(host.authorize_call("claude_mod", "read_file").is_ok());
-    assert!(host
-        .authorize_event("claude_mod", &filter, EventMode::Middleware)
-        .is_ok());
+    assert!(
+        host.authorize_event("claude_mod", &filter, EventMode::Middleware)
+            .is_ok()
+    );
 }
 
 #[test]
@@ -60,13 +61,16 @@ fn intercept_stays_with_owner() {
         instance: Some(InstanceId::new("session").unwrap()),
         name: None,
     };
-    assert!(host
-        .authorize_event("claude_mod", &filter, EventMode::Message)
-        .is_ok());
-    assert!(host
-        .authorize_event("claude_mod", &filter, EventMode::Middleware)
-        .is_err());
-    assert!(host
-        .authorize_event("session", &filter, EventMode::Middleware)
-        .is_ok());
+    assert!(
+        host.authorize_event("claude_mod", &filter, EventMode::Message)
+            .is_ok()
+    );
+    assert!(
+        host.authorize_event("claude_mod", &filter, EventMode::Middleware)
+            .is_err()
+    );
+    assert!(
+        host.authorize_event("session", &filter, EventMode::Middleware)
+            .is_ok()
+    );
 }

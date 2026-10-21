@@ -7,8 +7,8 @@ use ai_protocol::{ContentPart, Message, MessageContent, Role};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::ext::{merge_ext, normalize_ident, MetricMap, RefMap, RefOp};
 use crate::error::SessionError;
+use crate::ext::{MetricMap, RefMap, RefOp, merge_ext, normalize_ident};
 
 /// Unix 毫秒
 pub(crate) fn now_ms() -> u64 {
@@ -259,8 +259,12 @@ pub struct Conversation {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ItemBody {
-    Message { message: Message },
-    Notice { text: String },
+    Message {
+        message: Message,
+    },
+    Notice {
+        text: String,
+    },
     Artifact {
         name: String,
         /// 媒体提示（如 mime）；由渲染层解释，本层不绑定前端技术栈
@@ -268,7 +272,10 @@ pub enum ItemBody {
         text: String,
     },
     /// 扩展正文。`kind` 由调用方定义，会话层不解释
-    Ext { kind: String, payload: Value },
+    Ext {
+        kind: String,
+        payload: Value,
+    },
 }
 
 impl ItemBody {
@@ -526,7 +533,11 @@ impl ItemDraft {
         self
     }
 
-    pub fn bind(mut self, slot: impl Into<String>, refer: crate::ext::ExtRef) -> Result<Self, SessionError> {
+    pub fn bind(
+        mut self,
+        slot: impl Into<String>,
+        refer: crate::ext::ExtRef,
+    ) -> Result<Self, SessionError> {
         self.refs.bind(slot, refer)?;
         Ok(self)
     }

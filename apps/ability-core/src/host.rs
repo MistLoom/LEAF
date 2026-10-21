@@ -4,13 +4,13 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex as StdMutex, RwLock as StdRwLock};
 
-use async_trait::async_trait;
 use ability_support::{
-    host_event, method_catalog, Ability, AbilityEvent, AbilityId, AbilityProvider, Aspect,
-    CatalogEntry, ChainStatus, DiscoveryPayload, Error, EventDir, EventFilter, EventMode, EventUnreg,
-    FeedbackScope, HostEvent, InstanceId, InvokeMask, Lifecycle, LoadSpec, LocalsScope, MethodId,
-    ProtocolKind, Result, SourceId, UserEvent,
+    Ability, AbilityEvent, AbilityId, AbilityProvider, Aspect, CatalogEntry, ChainStatus,
+    DiscoveryPayload, Error, EventDir, EventFilter, EventMode, EventUnreg, FeedbackScope,
+    HostEvent, InstanceId, InvokeMask, Lifecycle, LoadSpec, LocalsScope, MethodId, ProtocolKind,
+    Result, SourceId, UserEvent, host_event, method_catalog,
 };
+use async_trait::async_trait;
 use frame_core::{AbilityExpose, AccessKind, Gateway, InvokeRequest, InvokeResponse};
 use serde_json::Value;
 use tokio::sync::{Mutex, Notify};
@@ -148,7 +148,10 @@ impl HostInner {
         if target_grant.open {
             return Ok(());
         }
-        let caller_app = self.grant(caller).map(|g| g.app).or_else(|| self.entry_app());
+        let caller_app = self
+            .grant(caller)
+            .map(|g| g.app)
+            .or_else(|| self.entry_app());
         match caller_app {
             Some(app) if app == target_grant.app => Ok(()),
             _ => Err(Error::unavailable(format!(
@@ -308,10 +311,14 @@ impl HostInner {
         ))
     }
 
-    fn stateful_taken(&self, ability_id: &AbilityId, instances: &HashMap<InstanceId, InstanceSlot>) -> bool {
-        instances.values().any(|s| {
-            s.ability.manifest().stateful && s.ability.manifest().id == *ability_id
-        })
+    fn stateful_taken(
+        &self,
+        ability_id: &AbilityId,
+        instances: &HashMap<InstanceId, InstanceSlot>,
+    ) -> bool {
+        instances
+            .values()
+            .any(|s| s.ability.manifest().stateful && s.ability.manifest().id == *ability_id)
     }
 
     fn bindings_cycle(
@@ -377,9 +384,9 @@ impl HostInner {
         for dep in depends {
             let key = dep.key();
             if let Some(spec) = spec_bindings.and_then(|b| b.get(&key)) {
-                let slot = instances.get(spec).ok_or_else(|| {
-                    Error::failed(format!("绑定目标实例不存在: {spec}"))
-                })?;
+                let slot = instances
+                    .get(spec)
+                    .ok_or_else(|| Error::failed(format!("绑定目标实例不存在: {spec}")))?;
                 if slot.phase != Lifecycle::Ready {
                     return Err(Error::failed(format!(
                         "绑定目标实例未就绪: {spec} ({:?})",
@@ -516,10 +523,7 @@ impl HostInner {
                 &map,
             )?;
             if Self::bindings_cycle(&spec.as_name, &bindings, &map) {
-                return Err(Error::failed(format!(
-                    "能力 {} 依赖成环",
-                    manifest.id
-                )));
+                return Err(Error::failed(format!("能力 {} 依赖成环", manifest.id)));
             }
             bindings
         };
@@ -556,7 +560,8 @@ impl HostInner {
             chain_id: ctx.chain_id.clone(),
             span: ctx.span,
         };
-        if let Err(e) = with_scope(life_scope, ability.on_lifecycle(Lifecycle::Started, &ctx)).await {
+        if let Err(e) = with_scope(life_scope, ability.on_lifecycle(Lifecycle::Started, &ctx)).await
+        {
             self.set_phase(&spec.as_name, Lifecycle::Failed);
             self.emit_lifecycle(&spec.as_name, Lifecycle::Failed).await;
             self.instances
@@ -676,11 +681,8 @@ impl HostInner {
             )
         };
 
-        let discovery = DiscoveryPayload::from_manifest(
-            instance.clone(),
-            Lifecycle::Ready,
-            ability.manifest(),
-        );
+        let discovery =
+            DiscoveryPayload::from_manifest(instance.clone(), Lifecycle::Ready, ability.manifest());
         self.events
             .emit_host(HostEvent {
                 name: host_event::INVOKE_BEFORE.into(),
@@ -738,10 +740,10 @@ impl HostInner {
                         at: now_ms(),
                         discovery: Some(discovery),
                         detail: serde_json::json!({
-                    "method": method.as_str(),
-                    "chain_id": chain_id,
-                    "span": span,
-                }),
+                            "method": method.as_str(),
+                            "chain_id": chain_id,
+                            "span": span,
+                        }),
                     })
                     .await;
             }
@@ -859,7 +861,12 @@ impl AbilityHost {
     }
 
     /// 事件控制：拦截仅属主；监听允许属主，或目标 `open`。
-    pub fn authorize_event(&self, caller: &str, filter: &EventFilter, mode: EventMode) -> Result<()> {
+    pub fn authorize_event(
+        &self,
+        caller: &str,
+        filter: &EventFilter,
+        mode: EventMode,
+    ) -> Result<()> {
         self.inner.authorize_event(caller, filter, mode)
     }
 

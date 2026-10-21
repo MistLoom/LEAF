@@ -10,8 +10,8 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{AbilityId, InstanceId, Lifecycle, MethodMeta, Result};
 use crate::manifest::{EventDecl, EventDir};
+use crate::{AbilityId, InstanceId, Lifecycle, MethodMeta, Result};
 
 /// 事件大类。
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

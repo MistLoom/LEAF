@@ -4,12 +4,12 @@ English · [中文](getting-started.zh-CN.md)
 
 ## Requirements
 
-- Recent Rust toolchain (workspace edition 2024)
-- Work from the repository root
+- Recent Rust toolchain
+- Build and run from the project root
 
 ## Create an application
 
-Add a crate at `apps/<name>`, list it in workspace `members`, and depend on `frame-compose`. Keep the default features so `common/ability` is linked.
+Add an application crate, depend on the runtime composition library, and bootstrap. The app name matches the entry app in assembly config.
 
 ```rust
 use frame_compose::AppBuilder;
@@ -20,7 +20,7 @@ let app = AppBuilder::new()
     .await;
 ```
 
-`app` is the entry application and matches the directory name. `AppHandle` exposes `gateway`, `host`, `expose`, `catalog`, and `control()`.
+`AppHandle` exposes `gateway`, `host`, `expose`, `catalog`, and `control()`.
 
 ## Invoke
 
@@ -38,7 +38,7 @@ let response = app
     .await?;
 ```
 
-Same-app `ctx.call` is not gated by `AbilityExpose`. A call into another app requires `open: true` on the target. `common` is open to the entry app.
+Same-app `ctx.call` is not gated by `AbilityExpose`. A call into another app requires `open: true` on the target. Shared Abilities are open to the entry app.
 
 ## Subscribe
 
@@ -58,23 +58,13 @@ while let Some(event) = events.next().await {
 }
 ```
 
-`listen` delivers events from this app, from `common`, and from other apps' open Abilities. `intercept` applies to this app and to `common`.
+`listen` delivers events from this app, from shared Abilities, and from other apps' open Abilities. `intercept` applies to this app and to shared Abilities.
 
-## Example applications
+## Examples
 
-`apps/agent-test` is a minimal agent example: session, turn loop, and tool execution on the same Gateway.
+The repository ships runnable sample apps (agent and web scenarios). From the root: `cargo run -p <app-crate> -- …`. Crate names are listed in workspace members.
 
-```bash
-cargo run -p apps-agent-test -- run -p "Explain README.md"
-cargo run -p apps-agent-test -- serve
-```
-
-`apps/web-agent` loads shared Abilities from `common/ability` and the open agent loop from `agent-test`. Ecosystem plugins are optional; see [Ecosystem plugins](ecosystem-plugins.md).
-
-```bash
-cargo run -p web-agent -- doctor
-cargo run -p web-agent -- serve
-```
+Optional ecosystem plugins: [Ecosystem plugins](ecosystem-plugins.md).
 
 ## Next
 

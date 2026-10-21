@@ -5,9 +5,7 @@ use serde_json::json;
 
 use crate::ext::ExtRef;
 use crate::hub::{HubConfig, SessionHub};
-use crate::model::{
-    ContextPolicy, ItemDraft, ItemKind, ItemPatch, TagOp, TagSet,
-};
+use crate::model::{ContextPolicy, ItemDraft, ItemKind, ItemPatch, TagOp, TagSet};
 use crate::query::{ItemQuery, TagFilter};
 use crate::render::{RenderBody, RenderPolicy, RenderViewSpec};
 use crate::snapshot::ImportMode;
@@ -25,10 +23,7 @@ async fn sugar_crud_and_protocol_projection() {
 
     session.append_user("hello").await.unwrap();
     session.append_assistant("hi").await.unwrap();
-    session
-        .append(ItemDraft::notice("内部备注"))
-        .await
-        .unwrap();
+    session.append(ItemDraft::notice("内部备注")).await.unwrap();
     session
         .append(ItemDraft::artifact("图", "text/plain", "body"))
         .await
@@ -122,7 +117,12 @@ async fn tag_catalog_rename_and_item_filter() {
         .unwrap();
     assert_eq!(tools.len(), 1);
 
-    let users = s.items().kinds(vec![ItemKind::User]).collect().await.unwrap();
+    let users = s
+        .items()
+        .kinds(vec![ItemKind::User])
+        .collect()
+        .await
+        .unwrap();
     assert_eq!(users.len(), 2);
 }
 
@@ -264,9 +264,19 @@ async fn compact_context_and_pin() {
 
     let full = s.protocol_messages().await.unwrap();
     // pinned user "keep" + unhidden "c" + marker system
-    assert!(full.iter().any(|m| m.content_text().as_deref() == Some("keep")));
-    assert!(full.iter().any(|m| m.content_text().as_deref() == Some("c")));
-    assert!(!full.iter().any(|m| m.content_text().as_deref() == Some("a")));
+    assert!(
+        full.iter()
+            .any(|m| m.content_text().as_deref() == Some("keep"))
+    );
+    assert!(
+        full.iter()
+            .any(|m| m.content_text().as_deref() == Some("c"))
+    );
+    assert!(
+        !full
+            .iter()
+            .any(|m| m.content_text().as_deref() == Some("a"))
+    );
     assert!(pin.pinned);
 
     let sliced = s

@@ -1,6 +1,7 @@
 //! Ability 声明文件代码生成。
 
 mod codegen;
+mod targets;
 
 use std::env;
 use std::fs;
@@ -8,6 +9,7 @@ use std::path::{Path, PathBuf};
 
 pub use codegen::CodegenOptions;
 pub use codegen::{ensure_mod_declarations, write_generated, write_scaffold_once};
+pub use targets::{CodegenTarget, write_target};
 pub use ability_support::FRAMEWORK_VERSION;
 
 /// 从能力根目录生成代码到 `src/generated/`。

@@ -4,6 +4,7 @@
 
 #![cfg_attr(not(test), allow(dead_code))]
 
+mod ability;
 mod error;
 mod ext;
 mod generated;
@@ -16,7 +17,6 @@ mod run;
 mod snapshot;
 mod store;
 mod sugar;
-mod ability;
 
 pub use ability::provider;
 

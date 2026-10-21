@@ -27,9 +27,8 @@ impl PromptBuilder {
     }
 
     pub fn context(&mut self, title: impl Into<String>, body: impl Into<String>) -> &mut Self {
-        self.system_sections.push(
-            PromptSection::new(SectionKind::Context, body).with_title(title),
-        );
+        self.system_sections
+            .push(PromptSection::new(SectionKind::Context, body).with_title(title));
         self
     }
 
@@ -119,11 +118,7 @@ impl PromptBuilder {
             .filter(|s| !s.is_empty())
             .collect::<Vec<_>>()
             .join("\n\n");
-        if text.is_empty() {
-            None
-        } else {
-            Some(text)
-        }
+        if text.is_empty() { None } else { Some(text) }
     }
 
     /// 调试用纯文本展开（非协议格式）。
@@ -154,9 +149,7 @@ mod tests {
     #[test]
     fn builds_system_and_user() {
         let mut b = PromptBuilder::new();
-        b.system("你是助手")
-            .context("facts", "a=1")
-            .user("hello");
+        b.system("你是助手").context("facts", "a=1").user("hello");
         let msgs = b.build();
         assert_eq!(msgs.len(), 2);
         assert_eq!(msgs[0].role, Role::System);

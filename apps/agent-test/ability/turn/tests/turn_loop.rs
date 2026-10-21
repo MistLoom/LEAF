@@ -2,12 +2,12 @@
 
 use std::sync::Arc;
 
-use ai_protocol::ToolCallKind;
 use ability_core::AbilityHost;
 use ability_support::{
     Ability, AbilityManifest, FnAbility, InstanceId, LoadSpec, MethodId, MethodMeta, SourceId,
     StaticProvider,
 };
+use ai_protocol::ToolCallKind;
 use frame_core::InvokeRequest;
 use serde_json::json;
 
@@ -99,12 +99,9 @@ async fn turn_loop_calls_tool_then_stops() {
     host.install_str("dispatch", ai_dispatch::provider())
         .await
         .unwrap();
-    host.install_str(
-        "chat",
-        Arc::new(StaticProvider::new(mock_chat_provider())),
-    )
-    .await
-    .unwrap();
+    host.install_str("chat", Arc::new(StaticProvider::new(mock_chat_provider())))
+        .await
+        .unwrap();
     host.install_str("algo.echo", Arc::new(StaticProvider::new(echo)))
         .await
         .unwrap();
@@ -127,8 +124,11 @@ async fn turn_loop_calls_tool_then_stops() {
         ],
     );
     host.load(
-        LoadSpec::new(SourceId::new("turn").unwrap(), InstanceId::new("turn").unwrap())
-            .with_config(json!({ "max_rounds": 8 })),
+        LoadSpec::new(
+            SourceId::new("turn").unwrap(),
+            InstanceId::new("turn").unwrap(),
+        )
+        .with_config(json!({ "max_rounds": 8 })),
     )
     .await
     .unwrap();

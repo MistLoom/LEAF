@@ -1,41 +1,29 @@
-//! 远程 Provider：duplex 协议、跨进程回呼、unload 后再接新会话。
+//! 远程 Provider：duplex 协议；断言见 guest_conformance。
+
+mod common;
 
 use std::sync::Arc;
 
+use ability_core::AbilityHost;
+use ability_probe::{
+    chain_provider, ctx_provider, echo_provider, effect_provider, feedback_provider, hub_provider,
+    provider, stamp_provider, sub_provider, surface_provider, wrap_provider,
+};
+use ability_sdk::AbilitySpec;
 use ability_sdk::prelude::*;
-use ability_sdk::{serve, AbilityProvider, AbilitySpec};
-use ability_support::{
-    EventClass, EventFilter, EventListener, InstanceId, LoadSpec, MethodId, SourceId, StaticProvider,
+use ability_support::Ability;
+use ability_support::LoadSpec;
+use common::fixture::{boot_duplex, duplex_provider, iid, install_connected, mid, sid};
+use common::guest_conformance::{
+    assert_event_lanes, assert_handle_middleware, assert_hub_guest_surface,
+    assert_probe_invoke_emit_unload, assert_protocol_filter_retains, assert_push_effect_undo,
+    assert_register_aspect_fails, assert_share_chain_status, assert_stamp_reload_new_session,
+    assert_stamp_reload_same_impl, assert_subscribe_stream, assert_wrap_alias_call_emit,
 };
 use frame_core::InvokeRequest;
-use ability_core::{connect, AbilityHost};
 use serde_json::json;
 
-fn sid(s: &str) -> SourceId {
-    SourceId::new(s).unwrap()
-}
-
-fn iid(s: &str) -> InstanceId {
-    InstanceId::new(s).unwrap()
-}
-
-fn mid(s: &str) -> MethodId {
-    MethodId::new(s).unwrap()
-}
-
-async fn install_connected(
-    host: &AbilityHost,
-    source: &str,
-    ability: Arc<dyn ability_support::Ability>,
-) {
-    host.install(sid(source), Arc::new(StaticProvider::new(ability)))
-        .await;
-    host.load(LoadSpec::new(sid(source), iid(source)))
-        .await
-        .unwrap();
-}
-
-fn stamp_provider(stamp: &'static str) -> Arc<dyn AbilityProvider> {
+fn stamp_duplex_provider(stamp: &'static str) -> Arc<dyn ability_support::AbilityProvider> {
     AbilitySpec::must("stamp")
         .on(
             "run",
@@ -46,99 +34,53 @@ fn stamp_provider(stamp: &'static str) -> Arc<dyn AbilityProvider> {
         .into_provider()
 }
 
-#[tokio::test(flavor = "multi_thread")]
-async fn duplex_probe_invoke_emit_unload() {
-    let (client, server) = tokio::io::duplex(64 * 1024);
-    let (server_r, server_w) = tokio::io::split(server);
-    let (client_r, client_w) = tokio::io::split(client);
-    tokio::spawn(async move {
-        serve(ability_probe::provider(), server_r, server_w)
-            .await
-            .unwrap();
-    });
-    let ability = connect(client_r, client_w, json!({})).await.unwrap();
+async fn boot_stamp(stamp: &'static str) -> Arc<dyn Ability> {
+    boot_duplex(stamp_duplex_provider(stamp), json!({})).await
+}
 
-    let host = AbilityHost::new();
-    install_connected(&host, "probe", ability).await;
-
-    let mut sub = host
-        .events()
-        .listen(EventFilter {
-            class: Some(EventClass::Ability),
-            name: Some("pong".into()),
-            instance: None,
-        })
-        .await;
-
-    let gw = host.clone().into_gateway();
-    let resp = gw
-        .invoke(InvokeRequest::new(iid("probe"), mid("ping"), json!({})))
+async fn install_duplex_loaded(
+    host: &AbilityHost,
+    source: &str,
+    provider: Arc<dyn ability_support::AbilityProvider>,
+) {
+    host.install(sid(source), duplex_provider(provider)).await;
+    host.load(LoadSpec::new(sid(source), iid(source)))
         .await
         .unwrap();
-    assert_eq!(resp.data["ok"], true);
-    assert_eq!(resp.data["from"], "external");
+}
 
-    let ev = sub.next().await.expect("pong");
-    assert_eq!(ev.name(), "pong");
+async fn install_duplex_only(
+    host: &AbilityHost,
+    source: &str,
+    provider: Arc<dyn ability_support::AbilityProvider>,
+) {
+    host.install(sid(source), duplex_provider(provider)).await;
+}
 
-    host.unload(&iid("probe")).await.unwrap();
-    let err = gw
-        .invoke(InvokeRequest::new(iid("probe"), mid("ping"), json!({})))
-        .await
-        .unwrap_err();
-    assert_eq!(err.kind(), ability_support::ErrorKind::NotFound);
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_probe_invoke_emit_unload() {
+    let ability = boot_duplex(provider(), json!({})).await;
+    let host = AbilityHost::new();
+    install_connected(&host, "probe", ability).await;
+    assert_probe_invoke_emit_unload(&host, "external").await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn duplex_wrap_calls_in_process_echo() {
-    let (client, server) = tokio::io::duplex(64 * 1024);
-    let (server_r, server_w) = tokio::io::split(server);
-    let (client_r, client_w) = tokio::io::split(client);
-    tokio::spawn(async move {
-        serve(ability_probe::wrap_provider(), server_r, server_w)
-            .await
-            .unwrap();
-    });
-    let wrap = connect(client_r, client_w, json!({})).await.unwrap();
-
+    let wrap = boot_duplex(wrap_provider(), json!({})).await;
     let host = AbilityHost::new();
-    host.install(sid("probe.echo"), ability_probe::echo_provider())
-        .await;
+    host.install(sid("probe.echo"), echo_provider()).await;
     host.load(LoadSpec::new(sid("probe.echo"), iid("probe.echo")))
         .await
         .unwrap();
     install_connected(&host, "probe.wrap", wrap).await;
-
-    let resp = host
-        .clone()
-        .into_gateway()
-        .invoke(InvokeRequest::new(
-            iid("probe.wrap"),
-            mid("run"),
-            json!({ "n": 2 }),
-        ))
-        .await
-        .unwrap();
-    assert_eq!(resp.data["wrapped"]["n"], 2);
-    assert_eq!(resp.data["fx"], true);
+    assert_wrap_alias_call_emit(&host).await;
 }
 
 #[tokio::test(flavor = "multi_thread")]
 async fn duplex_unload_reload_new_remote() {
-    async fn boot(stamp: &'static str) -> Arc<dyn ability_support::Ability> {
-        let (client, server) = tokio::io::duplex(64 * 1024);
-        let (server_r, server_w) = tokio::io::split(server);
-        let (client_r, client_w) = tokio::io::split(client);
-        tokio::spawn(async move {
-            serve(stamp_provider(stamp), server_r, server_w)
-                .await
-                .unwrap();
-        });
-        connect(client_r, client_w, json!({})).await.unwrap()
-    }
-
     let host = AbilityHost::new();
-    install_connected(&host, "stamp", boot("a").await).await;
+    install_connected(&host, "stamp", boot_stamp("a").await).await;
     let gw = host.clone().into_gateway();
     let a = gw
         .invoke(InvokeRequest::new(iid("stamp"), mid("run"), json!({})))
@@ -147,10 +89,92 @@ async fn duplex_unload_reload_new_remote() {
     assert_eq!(a.data["stamp"], "a");
 
     host.unload(&iid("stamp")).await.unwrap();
-    install_connected(&host, "stamp", boot("b").await).await;
+    install_connected(&host, "stamp", boot_stamp("b").await).await;
     let b = gw
         .invoke(InvokeRequest::new(iid("stamp"), mid("run"), json!({})))
         .await
         .unwrap();
     assert_eq!(b.data["stamp"], "b");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_stamp_reload_same_impl() {
+    let host = AbilityHost::new();
+    install_duplex_only(&host, "stamp", stamp_provider()).await;
+    assert_stamp_reload_same_impl(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_stamp_reload_new_session() {
+    let host = AbilityHost::new();
+    install_duplex_only(&host, "stamp", stamp_provider()).await;
+    assert_stamp_reload_new_session(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_feedback() {
+    let host = AbilityHost::new();
+    install_duplex_loaded(&host, "probe.feedback", feedback_provider()).await;
+    ability_support::feedback::purge();
+    let gw = host.clone().into_gateway();
+    let resp = gw
+        .invoke(InvokeRequest::new(
+            iid("probe.feedback"),
+            mid("ping"),
+            json!({}),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(resp.data["ok"], true);
+    // 同进程：客端 commit 一次，宿主 accept 再落一次。
+    let n = ability_support::feedback::list()
+        .iter()
+        .filter(|r| r.desc == "probe-feedback-rust")
+        .count();
+    assert!(n >= 2, "feedback 应同时留在客端与宿主，实际 {n}");
+    ability_support::feedback::purge();
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_hub_surface() {
+    let host = AbilityHost::new();
+    install_duplex_only(&host, "probe.hub", hub_provider()).await;
+    assert_hub_guest_surface(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_subscribe() {
+    let host = AbilityHost::new();
+    install_duplex_loaded(&host, "probe.sub", sub_provider()).await;
+    assert_subscribe_stream(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_handle_middleware() {
+    let host = AbilityHost::new();
+    install_duplex_loaded(&host, "probe.chain", chain_provider()).await;
+    assert_handle_middleware(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_push_effect_undo() {
+    let host = AbilityHost::new();
+    install_duplex_loaded(&host, "probe.effect", effect_provider()).await;
+    assert_push_effect_undo(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_share_chain_status() {
+    let host = AbilityHost::new();
+    install_duplex_loaded(&host, "probe.ctx", ctx_provider()).await;
+    assert_share_chain_status(&host).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn duplex_surface() {
+    let host = AbilityHost::new();
+    install_duplex_loaded(&host, "probe.surface", surface_provider()).await;
+    assert_event_lanes(&host).await;
+    assert_protocol_filter_retains(&host).await;
+    assert_register_aspect_fails(&host).await;
 }

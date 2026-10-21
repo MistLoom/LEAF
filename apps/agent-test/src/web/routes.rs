@@ -5,18 +5,18 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::{
+    Router,
     extract::{Path, State},
     response::{
-        sse::{Event, KeepAlive, Sse},
         Html, IntoResponse, Json,
+        sse::{Event, KeepAlive, Sse},
     },
     routing::{get, post},
-    Router,
 };
-use futures_util::stream::{self, StreamExt};
 use futures_util::future::ready;
+use futures_util::stream::{self, StreamExt};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tokio_stream::wrappers::BroadcastStream;
 
 use crate::gateway::{self, invoke};
@@ -47,11 +47,20 @@ async fn index() -> Html<&'static str> {
 }
 
 async fn style() -> impl IntoResponse {
-    ([(axum::http::header::CONTENT_TYPE, "text/css; charset=utf-8")], include_str!("../../web/style.css"))
+    (
+        [(axum::http::header::CONTENT_TYPE, "text/css; charset=utf-8")],
+        include_str!("../../web/style.css"),
+    )
 }
 
 async fn script() -> impl IntoResponse {
-    ([(axum::http::header::CONTENT_TYPE, "application/javascript; charset=utf-8")], include_str!("../../web/app.js"))
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/javascript; charset=utf-8",
+        )],
+        include_str!("../../web/app.js"),
+    )
 }
 
 #[derive(Serialize)]

@@ -6,13 +6,13 @@
 
 use std::sync::Arc;
 
-use async_trait::async_trait;
+use crate::echo::EchoExt;
 use ability_sdk::prelude::*;
 use ability_sdk::{
-    host_event, Ability, AbilityId, AbilityManifest, BusEvent, Dependency, EventClass, EventDecl,
-    EventDir, EventFilter, FactoryProvider, InstanceId, LoadSpec, MethodId, MethodMeta, SourceId,
+    Ability, AbilityId, AbilityManifest, BusEvent, Dependency, EventClass, EventDecl, EventDir,
+    EventFilter, FactoryProvider, InstanceId, LoadSpec, MethodId, MethodMeta, SourceId, host_event,
 };
-use crate::echo::EchoExt;
+use async_trait::async_trait;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
@@ -201,6 +201,7 @@ impl Ability for Hub {
                 let via_macro = call!(ctx.probe.echo::run(args)).await?;
                 let hits = ctx.local_get("aspect.hits").await?;
                 Ok(json!({
+                    "via": via_ext.clone(),
                     "via_ext": via_ext,
                     "via_macro": via_macro,
                     "aspect_hits": hits,

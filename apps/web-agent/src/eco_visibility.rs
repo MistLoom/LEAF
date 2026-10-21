@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use frame_core::AbilityExpose;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const ECO_ABILITIES: [&str; 2] = ["claude_mod", "dsh_plugin"];
 
@@ -89,10 +89,7 @@ fn bind_dsh_tools(path: &str, loader: Option<&str>, eco_tools: &[String]) -> Val
 
 /// 从会话协议消息中提取「最近一轮」内的生态工具调用与结果摘要。
 pub fn trace_latest_turn_eco(messages: &Value) -> Value {
-    let arr = messages
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
+    let arr = messages.as_array().cloned().unwrap_or_default();
     let mut segment: Vec<&Value> = Vec::new();
     for msg in arr.iter().rev() {
         if msg.get("role").and_then(|v| v.as_str()) == Some("user") {

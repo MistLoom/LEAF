@@ -4,17 +4,19 @@ English · [中文](writing-abilities.zh-CN.md)
 
 ## Package layout
 
+One directory per Ability with `ability.yml` at the root. Typical Rust package:
+
 ```
-common/ability/<name>/       # shared across apps
-apps/<app>/ability/<name>/   # owned by that app
-  ability.yml
-  build.rs
-  src/
-    logic/          # business code
-    generated/      # codegen output
-  cli|mcp|tools|grpc|skill/
-    info.yml
+ability.yml
+build.rs
+src/
+  logic/          # business code
+  generated/      # declaration-driven codegen
+cli|mcp|tools|grpc|skill/
+  info.yml        # protocol projection (when needed)
 ```
+
+Shared and app-owned Abilities share the same layout; assembly discovers ownership.
 
 ## Handler and factory
 

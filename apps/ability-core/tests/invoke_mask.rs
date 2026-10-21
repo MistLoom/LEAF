@@ -2,11 +2,11 @@ mod common;
 
 use std::sync::Arc;
 
+use ability_core::AbilityHost;
 use ability_support::{
     Ability, CtxFnAbility, InstanceId, InvokeMask, LoadSpec, MethodId, SourceId, StaticProvider,
 };
 use frame_core::InvokeRequest;
-use ability_core::AbilityHost;
 use serde_json::json;
 
 #[tokio::test]
@@ -72,8 +72,15 @@ async fn invoke_mask_filters_catalog_and_call() {
         .await
         .unwrap();
 
-    let denied = out.data.get("denied").and_then(|v| v.as_str()).unwrap_or("");
-    assert!(denied.contains("调用链策略拒绝"), "expected mask denial, got {out:?}");
+    let denied = out
+        .data
+        .get("denied")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    assert!(
+        denied.contains("调用链策略拒绝"),
+        "expected mask denial, got {out:?}"
+    );
 
     let echo_out = gw
         .invoke(

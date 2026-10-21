@@ -5,7 +5,7 @@ use std::process::Command;
 
 use ability_support::CliInfo;
 
-use crate::catalog::{workspace_root, WorkspaceCatalog};
+use crate::catalog::{WorkspaceCatalog, workspace_root};
 
 /// 编译声明了 `cli/info.yml` 的能力二进制。
 pub fn build_clis(filter: Option<&str>, profile: &str) -> Result<(), String> {

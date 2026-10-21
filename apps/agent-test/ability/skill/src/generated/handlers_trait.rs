@@ -3,10 +3,14 @@ use async_trait::async_trait;
 
 
 #[derive(Debug, serde::Deserialize)]
-pub struct LoadArgs {}
+pub struct LoadArgs {
+    pub path: String,
+}
 
 #[derive(Debug, serde::Deserialize)]
-pub struct ListArgs {}
+pub struct ListArgs {
+    pub root: String,
+}
 
 
 #[async_trait]

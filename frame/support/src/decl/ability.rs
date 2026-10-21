@@ -5,9 +5,9 @@ use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::manifest::{Dependency, EventDecl, EventDir};
-use super::version::validate_framework_version;
 use super::protocol::ProtocolKind;
+use super::version::validate_framework_version;
+use crate::manifest::{Dependency, EventDecl, EventDir};
 
 /// 方法声明。
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -90,6 +90,16 @@ impl EventDeclYaml {
     }
 }
 
+/// 能力实现运行时（与线协议传输无关）。
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum RuntimeKind {
+    #[default]
+    Rust,
+    Node,
+    Python,
+}
+
 /// 能力本体声明（`ability.yml`）。
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AbilityDecl {
@@ -138,7 +148,10 @@ impl AbilityDecl {
             crate::MethodId::new(&m.id).map_err(|e| e.to_string())?;
             super::protocol::validate_schema_fragment(&m.input)?;
             if m.input.get("type").and_then(|v| v.as_str()) != Some("object") {
-                return Err(format!("ability.yml method {} 的 input 须含 type: object", m.id));
+                return Err(format!(
+                    "ability.yml method {} 的 input 须含 type: object",
+                    m.id
+                ));
             }
             if let Some(out) = &m.output {
                 super::protocol::validate_schema_fragment(out)?;

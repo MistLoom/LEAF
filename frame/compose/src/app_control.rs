@@ -6,7 +6,10 @@ use std::collections::BTreeSet;
 use std::sync::Arc;
 
 use ability_core::{AbilityHost, ChannelListener};
-use ability_support::{BusEvent, Error, EventFilter, EventHandler, EventMiddleware, EventNext, EventOpts, EventReg, Result};
+use ability_support::{
+    BusEvent, Error, EventFilter, EventHandler, EventMiddleware, EventNext, EventOpts, EventReg,
+    Result,
+};
 use async_trait::async_trait;
 
 use crate::catalog::WorkspaceCatalog;
@@ -46,7 +49,11 @@ impl AppControl {
     /// 监听本应用能力事件，以及他应用已开放能力的事件。
     pub async fn listen(&self, filter: EventFilter) -> Result<ChannelListener> {
         self.check(&filter, false)?;
-        Ok(self.host.events().listen_where(filter, self.allow(false)).await)
+        Ok(self
+            .host
+            .events()
+            .listen_where(filter, self.allow(false))
+            .await)
     }
 
     /// 拦截本应用能力事件。他应用事件会原样交给后续处理者。
@@ -60,11 +67,10 @@ impl AppControl {
             allow: self.allow(true),
             inner: middleware,
         });
-        Ok(self.host.events().handle(
-            filter,
-            EventHandler::Middleware(gate),
-            EventOpts::default(),
-        ))
+        Ok(self
+            .host
+            .events()
+            .handle(filter, EventHandler::Middleware(gate), EventOpts::default()))
     }
 
     fn check(&self, filter: &EventFilter, intercept: bool) -> Result<()> {

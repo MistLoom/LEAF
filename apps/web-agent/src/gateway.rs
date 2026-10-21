@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use ability_support::{InstanceId, MethodId, Result};
 use frame_core::{Gateway, InvokeRequest};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub async fn invoke(
     gateway: &Arc<dyn Gateway>,
@@ -14,8 +14,10 @@ pub async fn invoke(
 ) -> Result<Value> {
     let resp = gateway
         .invoke(InvokeRequest::new(
-            InstanceId::new(instance).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
-            MethodId::new(method).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
+            InstanceId::new(instance)
+                .map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
+            MethodId::new(method)
+                .map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
             args,
         ))
         .await?;

@@ -12,7 +12,10 @@ pub struct SkillMeta {
 }
 
 impl SkillMeta {
-    pub fn new(name: impl Into<String>, description: impl Into<String>) -> Result<Self, SkillError> {
+    pub fn new(
+        name: impl Into<String>,
+        description: impl Into<String>,
+    ) -> Result<Self, SkillError> {
         let name = name.into();
         if name.is_empty() {
             return Err(SkillError::InvalidMeta("name 不能为空".into()));
@@ -48,7 +51,9 @@ impl Skill {
     pub fn render_prompt_section(&self) -> String {
         format!(
             "## Skill: {}\n\n{}\n\n{}",
-            self.meta.name, self.meta.description, self.body.trim()
+            self.meta.name,
+            self.meta.description,
+            self.body.trim()
         )
     }
 

@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use ability_core::{AbilityHost, ChannelListener};
 use ability_support::{
-    host_event, EventClass, EventFilter, EventHandler, EventOpts, EventReg, EventSink,
+    EventClass, EventFilter, EventHandler, EventOpts, EventReg, EventSink, host_event,
 };
 
 /// 待 bootstrap 应用的 Host 事件登记。
@@ -21,7 +21,8 @@ pub struct HostRegistration {
 impl HostRegistration {
     /// 登记到 Host 的 EventBus；丢弃返回的 [`EventReg`] 即卸。
     pub fn register(&self, host: &AbilityHost) -> EventReg {
-        host.events().handle(self.filter.clone(), self.handler.clone(), self.opts)
+        host.events()
+            .handle(self.filter.clone(), self.handler.clone(), self.opts)
     }
 }
 
@@ -36,11 +37,7 @@ pub fn on_host(filter: EventFilter, handler: EventHandler, opts: EventOpts) -> H
 
 /// `message` 模式快捷登记。
 pub fn on_host_message(filter: EventFilter, sink: Arc<dyn EventSink>) -> HostRegistration {
-    on_host(
-        filter,
-        EventHandler::Message(sink),
-        EventOpts::default(),
-    )
+    on_host(filter, EventHandler::Message(sink), EventOpts::default())
 }
 
 /// 批量登记。

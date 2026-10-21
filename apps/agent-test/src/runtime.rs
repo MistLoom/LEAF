@@ -5,7 +5,7 @@ use std::sync::Arc;
 use ability_core::AbilityHost;
 use ability_support::{InstanceId, MethodId, Result};
 use frame_core::{AbilityExpose, Gateway, InvokeMask, InvokeRequest, invoke_mask_from_expose};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Web / spawn 编排所需的最小运行时句柄。
 #[derive(Clone)]
@@ -67,8 +67,10 @@ pub async fn invoke_with_mask(
     let resp = gateway
         .invoke(
             InvokeRequest::new(
-                InstanceId::new(instance).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
-                MethodId::new(method).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
+                InstanceId::new(instance)
+                    .map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
+                MethodId::new(method)
+                    .map_err(|e| ability_support::Error::invalid_args(e.to_string()))?,
                 args,
             )
             .with_invoke_mask(mask),

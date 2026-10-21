@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use crate::error::SessionError;
 use crate::model::{
-    now_ms, AppendOutcome, ContextPolicy, ContextView, Conversation, ConversationBundle,
-    ConversationId, ConversationPatch, ConversationStatus, CreateSpec, ItemDraft, ItemId, ItemPatch,
-    SessionItem, TagOp, TagScope, TagStat,
+    AppendOutcome, ContextPolicy, ContextView, Conversation, ConversationBundle, ConversationId,
+    ConversationPatch, ConversationStatus, CreateSpec, ItemDraft, ItemId, ItemPatch, SessionItem,
+    TagOp, TagScope, TagStat, now_ms,
 };
 use crate::query::{ConversationQuery, ItemQuery, Page};
 use crate::render::{RenderCache, RenderLoader, RenderPolicy};
 use crate::run::{Run, RunId, RunPatch, RunQuery, RunSpec, RunStatus};
-use crate::snapshot::{ImportMode, SessionSnapshot, SNAPSHOT_FORMAT};
+use crate::snapshot::{ImportMode, SNAPSHOT_FORMAT, SessionSnapshot};
 use crate::store::{ConversationStore, MemoryStore};
 
 /// Hub 装配参数。
@@ -194,7 +194,10 @@ impl SessionHub {
         &self,
         id: &ConversationId,
     ) -> Result<Vec<ai_protocol::Message>, SessionError> {
-        Ok(self.protocol_context(id, &ContextPolicy::default()).await?.messages)
+        Ok(self
+            .protocol_context(id, &ContextPolicy::default())
+            .await?
+            .messages)
     }
 
     pub async fn protocol_context(
@@ -203,11 +206,7 @@ impl SessionHub {
         policy: &ContextPolicy,
     ) -> Result<ContextView, SessionError> {
         let page = self.inner.store.query_items(id, &ItemQuery::all()).await?;
-        let visible: Vec<&SessionItem> = page
-            .items
-            .iter()
-            .filter(|i| i.protocol_visible)
-            .collect();
+        let visible: Vec<&SessionItem> = page.items.iter().filter(|i| i.protocol_visible).collect();
         let mut selected: Vec<&SessionItem> = if let Some(max) = policy.max_items {
             let max = max as usize;
             let pinned: Vec<&SessionItem> = if policy.include_pinned {
@@ -327,11 +326,7 @@ impl SessionHub {
         Ok(out)
     }
 
-    pub async fn begin_run(
-        &self,
-        id: &ConversationId,
-        spec: RunSpec,
-    ) -> Result<Run, SessionError> {
+    pub async fn begin_run(&self, id: &ConversationId, spec: RunSpec) -> Result<Run, SessionError> {
         let _ = self.get(id).await?;
         if let Some(open) = self.inner.store.open_run(id).await? {
             return Err(SessionError::conflict(format!(
@@ -519,6 +514,4 @@ impl SessionHub {
         let page = self.inner.store.query_conversations(query).await?;
         Ok(page.items.into_iter().map(|c| c.id).collect())
     }
-
 }
-

@@ -5,13 +5,13 @@ use std::sync::Arc;
 
 use ability_core::{AbilityGrant, AbilityHost};
 use ability_support::{InstanceId, LoadSpec, SourceId};
-use frame_core::{AccessKind, AbilityExpose, Gateway, ProtocolController, ProtocolKind};
+use frame_core::{AbilityExpose, AccessKind, Gateway, ProtocolController, ProtocolKind};
 
-use crate::catalog::{register_protocol_support, WorkspaceCatalog};
+use crate::catalog::{WorkspaceCatalog, register_protocol_support};
 use crate::config::ConfigCatalog;
 use crate::expose::ToolHost;
 use crate::load_order::topo_sort;
-use crate::protocol_registry::{any_supports_gate, sync_protocol_support, ProtocolRegistry};
+use crate::protocol_registry::{ProtocolRegistry, any_supports_gate, sync_protocol_support};
 use crate::registry;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -173,7 +173,8 @@ pub async fn apply_expose_delta(
         let id = &entry.id;
         let was = old.resolve(id);
         let now = new.resolve(id);
-        let iid = InstanceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
+        let iid =
+            InstanceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
 
         if was.enabled && !now.enabled {
             if host.catalog().iter().any(|e| e.instance.as_str() == id) {
@@ -184,7 +185,8 @@ pub async fn apply_expose_delta(
 
         if !was.enabled && now.enabled {
             register_protocol_support(host, id, &entry.root);
-            let source = SourceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
+            let source = SourceId::new(id)
+                .map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
             host.load(LoadSpec::new(source, iid).with_config(now.config))
                 .await?;
         }
@@ -198,7 +200,8 @@ pub async fn reload_one(
     expose: &AbilityExpose,
     id: &str,
 ) -> Result<(), ability_support::Error> {
-    let iid = InstanceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
+    let iid =
+        InstanceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
     if host.catalog().iter().any(|e| e.instance.as_str() == id) {
         host.unload(&iid).await?;
     }
@@ -210,7 +213,8 @@ pub async fn reload_one(
         return Err(ability_support::Error::not_found(id));
     };
     register_protocol_support(host, id, &entry.root);
-    let source = SourceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
+    let source =
+        SourceId::new(id).map_err(|e| ability_support::Error::invalid_args(e.to_string()))?;
     host.load(LoadSpec::new(source, iid).with_config(resolved.config))
         .await?;
     Ok(())

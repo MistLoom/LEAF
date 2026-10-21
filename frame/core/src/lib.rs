@@ -10,22 +10,22 @@ mod invoke_mask;
 mod merge;
 mod port;
 
+pub use ability_support::InvokeMask;
 pub use ability_support::{
-    resolve_target, AbilityId, AbilityIdError, CatalogEntry, Error, ErrorKind, InstanceId,
-    InstanceIdError, Lifecycle, LocalsScope, MethodId, MethodIdError, Result, SourceId,
-    SourceIdError,
+    AbilityId, AbilityIdError, CatalogEntry, Error, ErrorKind, InstanceId, InstanceIdError,
+    Lifecycle, LocalsScope, MethodId, MethodIdError, Result, SourceId, SourceIdError,
+    resolve_target,
 };
 pub use controller::{
     ControllerRegistry, DefaultCliController, DefaultFunController, DefaultGrpcController,
     DefaultHttpController, DefaultMcpController, ProtocolController, ProtocolKind,
 };
 pub use expose::{
-    artifact_exe_name, AbilityExpose, AccessKind, ArtifactKind, CapExpose, ResolvedCap,
-    UnknownPolicy,
+    AbilityExpose, AccessKind, ArtifactKind, CapExpose, ResolvedCap, UnknownPolicy,
+    artifact_exe_name,
 };
 pub use gateway::Gateway;
 pub use invoke::{InvokeRequest, InvokeResponse};
 pub use invoke_mask::invoke_mask_from_expose;
-pub use ability_support::InvokeMask;
 pub use merge::merge_defaults;
 pub use port::Port;

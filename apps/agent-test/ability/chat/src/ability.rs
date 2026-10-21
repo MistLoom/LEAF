@@ -2,15 +2,15 @@
 
 use std::sync::Arc;
 
-use ai_protocol::{
-    ChatClient, ChatCompletionRequest, HttpChatClient, HttpChatConfig, Message, ToolChoice,
-};
 use ability_support::{
     Ability, AbilityCtx, AbilityManifest, AbilityProvider, AbilitySpec, Error, MethodId, Result,
 };
+use ai_protocol::{
+    ChatClient, ChatCompletionRequest, HttpChatClient, HttpChatConfig, Message, ToolChoice,
+};
 use async_trait::async_trait;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::generated::manifest;
 

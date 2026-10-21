@@ -1,0 +1,42 @@
+name: guest-conformance
+
+on:
+  push:
+    paths:
+      - "apps/ability-core/**"
+      - "external/ability-sdk-**"
+      - "external/ability-probe-**"
+      - "frame/support/**"
+      - "frame/compose/**"
+      - ".github/workflows/guest-conformance.yml"
+  pull_request:
+    paths:
+      - "apps/ability-core/**"
+      - "external/ability-sdk-**"
+      - "external/ability-probe-**"
+      - "frame/support/**"
+      - "frame/compose/**"
+      - ".github/workflows/guest-conformance.yml"
+
+jobs:
+  guest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Guest ctx API lint
+        run: cargo test -p ability-support --test guest_ctx_api
+
+      - name: ability-core guest integration
+        run: |
+          cargo test -p ability-core --test proc_guest_subprocess --test proc_remote --test external

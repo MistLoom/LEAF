@@ -2,14 +2,14 @@ mod common;
 
 use std::sync::Arc;
 
-use common::echo_provider;
+use ability_core::AbilityHost;
 use ability_support::{
     Ability, AbilityCtx, AbilityId, AbilityManifest, AbilityProvider, CtxFnAbility, Dependency,
     Effect, Error, ErrorKind, FnAbility, InstanceId, LoadSpec, MethodId, Result as CoreResult,
     SourceId, StaticProvider, Undo,
 };
+use common::echo_provider;
 use frame_core::{Gateway, InvokeRequest};
-use ability_core::AbilityHost;
 use serde_json::json;
 
 #[tokio::test]
@@ -108,14 +108,13 @@ async fn undo_runs_on_failure() {
     let flag = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let f = Arc::clone(&flag);
     let m = common::manifest("boom", &["run"]);
-    let ability: Arc<dyn Ability> =
-        Arc::new(CtxFnAbility::new(m, move |ctx, _args| {
-            let f = Arc::clone(&f);
-            Box::pin(async move {
-                ctx.push_effect(Box::new(FlagEffect { flag: f })).await?;
-                Err(Error::failed("boom"))
-            })
-        }));
+    let ability: Arc<dyn Ability> = Arc::new(CtxFnAbility::new(m, move |ctx, _args| {
+        let f = Arc::clone(&f);
+        Box::pin(async move {
+            ctx.push_effect(Box::new(FlagEffect { flag: f })).await?;
+            Err(Error::failed("boom"))
+        })
+    }));
     let host = AbilityHost::new();
     host.install_str("boom", Arc::new(StaticProvider::new(ability)))
         .await
@@ -186,11 +185,8 @@ async fn unload_drains_in_flight_and_rejects_new() {
     entered.notified().await;
 
     let host_u = host.clone();
-    let unloading = tokio::spawn(async move {
-        host_u
-            .unload(&InstanceId::new("slow").unwrap())
-            .await
-    });
+    let unloading =
+        tokio::spawn(async move { host_u.unload(&InstanceId::new("slow").unwrap()).await });
     tokio::time::sleep(Duration::from_millis(30)).await;
 
     let err = gw

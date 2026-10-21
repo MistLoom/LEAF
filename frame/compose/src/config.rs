@@ -18,7 +18,11 @@ impl ConfigCatalog {
         Self::default()
     }
 
-    pub fn load_id(&self, id: Option<&str>, path: impl AsRef<Path>) -> Result<(String, Value), Error> {
+    pub fn load_id(
+        &self,
+        id: Option<&str>,
+        path: impl AsRef<Path>,
+    ) -> Result<(String, Value), Error> {
         let path = path.as_ref();
         let value = load_assembly_file(path)?;
         let id = id.map(|s| s.to_string()).unwrap_or_else(|| {

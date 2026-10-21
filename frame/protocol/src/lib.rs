@@ -17,7 +17,9 @@ pub use chat::{
 };
 pub use client::ChatClient;
 pub use error::ProtocolError;
-pub use message::{json_content, repair_tool_call_chain, ContentPart, Message, MessageContent, Role};
+pub use message::{
+    ContentPart, Message, MessageContent, Role, json_content, repair_tool_call_chain,
+};
 pub use tool::{
     FunctionCall, FunctionDef, ToolCall, ToolCallKind, ToolChoice, ToolChoiceFunction, ToolDef,
     ToolResultMessage,

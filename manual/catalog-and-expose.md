@@ -2,9 +2,9 @@
 
 English · [中文](catalog-and-expose.zh-CN.md)
 
-Applications under `apps/` assemble Abilities in three steps: discover sources, decide which instances to load (`AbilityExpose`), then open Ports on the resulting `Gateway`.
+Scenario apps assemble Abilities in three steps: discover sources, decide which instances to load (`AbilityExpose`), then open Ports on the resulting `Gateway`.
 
-Discovery reads `common/ability/*/ability.yml` and `apps/<app>/ability/*/ability.yml`. `common` Abilities are shared: the entry app may call, listen, and intercept them. Each source records its owning app and `open`. Set the process entry app with `AppBuilder::app` or `ComposeOptions::app`. A call into another app requires `open: true`. Listen and intercept go through `AppHandle::control`.
+The framework discovers `ability.yml` from the conventional layout. Shared Abilities are callable, listenable, and interceptable by the entry app. Each source records its owning app and `open`. Set the process entry app with `AppBuilder::app` or `ComposeOptions::app`. A call into another app requires `open: true`. Listen and intercept go through `AppHandle::control`.
 
 ## Protocol declaration
 
@@ -131,4 +131,3 @@ After bootstrap, Ports apply an access gate: only loaded instances that register
 
 - [Getting started](getting-started.md)
 - [Write an Ability](writing-abilities.md)
-- Minimal agent example: `apps/agent-test`

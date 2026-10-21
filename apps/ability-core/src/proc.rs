@@ -7,18 +7,18 @@ use std::process::Stdio;
 use std::sync::{Arc, Mutex as StdMutex};
 use std::time::Duration;
 
-use async_trait::async_trait;
 use ability_support::remote::{
-    decode_frame, encode_frame, ok_value, Body, CtxOp, Frame, WireError,
+    Body, CtxOp, Frame, WireError, decode_frame, encode_frame, ok_value,
 };
 use ability_support::{
     Ability, AbilityCtx, AbilityId, AbilityManifest, AbilityProvider, BusEvent, Error, EventFilter,
     EventHandler, EventMiddleware, EventMode, EventNext, EventOpts, EventPipeline, EventReg,
     EventSink, InstanceId, Lifecycle, MethodId, MethodMeta, Result,
 };
-use serde_json::{json, Value};
+use async_trait::async_trait;
+use serde_json::{Value, json};
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{Mutex, mpsc, oneshot};
 use tokio::task::JoinHandle;
 use uuid::Uuid;
 
@@ -34,16 +34,25 @@ impl ProcSupervisor {
     }
 
     pub fn unregister(pid: u32) {
-        supervisor_pids().lock().expect("supervisor").retain(|p| *p != pid);
+        supervisor_pids()
+            .lock()
+            .expect("supervisor")
+            .retain(|p| *p != pid);
     }
 
     pub fn shutdown_all() {
-        let pids: Vec<u32> = supervisor_pids().lock().expect("supervisor").drain(..).collect();
+        let pids: Vec<u32> = supervisor_pids()
+            .lock()
+            .expect("supervisor")
+            .drain(..)
+            .collect();
         for pid in pids {
             #[cfg(unix)]
             {
                 use std::process::Command;
-                let _ = Command::new("kill").args(["-TERM", &pid.to_string()]).status();
+                let _ = Command::new("kill")
+                    .args(["-TERM", &pid.to_string()])
+                    .status();
             }
             #[cfg(windows)]
             {
@@ -212,9 +221,7 @@ async fn dispatch_ctx(bridge: Arc<Bridge>, ctx_id: &str, op: CtxOp) -> Result<Va
             guest_id,
         } => {
             let handler = remote_handler(Arc::clone(&bridge), guest_id, mode);
-            let reg = ctx
-                .handle(filter, handler, EventOpts { prepend })
-                .await?;
+            let reg = ctx.handle(filter, handler, EventOpts { prepend }).await?;
             let id = reg.id();
             bridge.handle_regs.lock().await.insert(id, reg);
             Ok(json!({ "id": id }))
@@ -291,22 +298,10 @@ struct RemoteSink {
 
 fn remote_handler(bridge: Arc<Bridge>, guest_id: String, mode: EventMode) -> EventHandler {
     match mode {
-        EventMode::Middleware => EventHandler::Middleware(Arc::new(RemoteMw {
-            bridge,
-            guest_id,
-        })),
-        EventMode::Pipeline => EventHandler::Pipeline(Arc::new(RemotePipe {
-            bridge,
-            guest_id,
-        })),
-        EventMode::Parallel => EventHandler::Parallel(Arc::new(RemoteSink {
-            bridge,
-            guest_id,
-        })),
-        EventMode::Message => EventHandler::Message(Arc::new(RemoteSink {
-            bridge,
-            guest_id,
-        })),
+        EventMode::Middleware => EventHandler::Middleware(Arc::new(RemoteMw { bridge, guest_id })),
+        EventMode::Pipeline => EventHandler::Pipeline(Arc::new(RemotePipe { bridge, guest_id })),
+        EventMode::Parallel => EventHandler::Parallel(Arc::new(RemoteSink { bridge, guest_id })),
+        EventMode::Message => EventHandler::Message(Arc::new(RemoteSink { bridge, guest_id })),
     }
 }
 
@@ -334,7 +329,8 @@ impl EventMiddleware for RemoteMw {
             .lock()
             .await
             .insert(token.clone(), next);
-        let reply = run_guest_handle(&self.bridge, &self.guest_id, event, Some(token.clone())).await;
+        let reply =
+            run_guest_handle(&self.bridge, &self.guest_id, event, Some(token.clone())).await;
         self.bridge.pending_next.lock().await.remove(&token);
         let v = reply?;
         serde_json::from_value(v).map_err(|e| Error::failed(e.to_string()))
@@ -401,7 +397,11 @@ impl Ability for ProcAbility {
         };
         let frame = Frame::request(body);
         let (tx, rx) = oneshot::channel();
-        self.bridge.pending.lock().await.insert(frame.id.clone(), tx);
+        self.bridge
+            .pending
+            .lock()
+            .await
+            .insert(frame.id.clone(), tx);
         self.bridge
             .ctxs
             .lock()
@@ -443,7 +443,7 @@ async fn finish_handshake(
         other => {
             return Err(Error::failed(format!(
                 "远程 Hello 应答不是 Manifest: {other:?}"
-            )))
+            )));
         }
     };
     bridge.request(Body::Create { config }).await?;
@@ -514,6 +514,7 @@ pub struct ProcProvider {
     program: PathBuf,
     args: Vec<OsString>,
     env: Vec<(OsString, OsString)>,
+    cwd: Option<PathBuf>,
     cached: StdMutex<Option<AbilityManifest>>,
 }
 
@@ -523,8 +524,14 @@ impl ProcProvider {
             program: program.into(),
             args: Vec::new(),
             env: Vec::new(),
+            cwd: None,
             cached: StdMutex::new(None),
         }
+    }
+
+    pub fn current_dir(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.cwd = Some(dir.into());
+        self
     }
 
     pub fn arg(mut self, arg: impl AsRef<OsStr>) -> Self {
@@ -539,7 +546,7 @@ impl ProcProvider {
     }
 }
 
-fn unbound_manifest() -> AbilityManifest {
+pub(crate) fn unbound_guest_manifest() -> AbilityManifest {
     AbilityManifest {
         id: AbilityId::new("remote.unbound").expect("id"),
         depends: vec![],
@@ -562,7 +569,7 @@ impl AbilityProvider for ProcProvider {
             .lock()
             .expect("cached")
             .clone()
-            .unwrap_or_else(unbound_manifest)
+            .unwrap_or_else(unbound_guest_manifest)
     }
 
     async fn create(&self, config: Value) -> Result<Arc<dyn Ability>> {
@@ -575,6 +582,9 @@ impl AbilityProvider for ProcProvider {
             .stderr(Stdio::inherit());
         for (k, v) in &self.env {
             cmd.env(k, v);
+        }
+        if let Some(cwd) = &self.cwd {
+            cmd.current_dir(cwd);
         }
         let mut child = cmd.spawn().map_err(|e| Error::io(e.to_string()))?;
         let mut stdin = child

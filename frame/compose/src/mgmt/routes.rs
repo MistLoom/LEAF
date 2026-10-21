@@ -7,8 +7,8 @@ use std::sync::{Arc, RwLock};
 
 use ability_core::AbilityHost;
 use ability_support::{
-    load_ability_package, DiscoveryPayload, EventClass, EventFilter, EventListener, InstanceId,
-    LoadSpec, MethodId, SourceId,
+    DiscoveryPayload, EventClass, EventFilter, EventListener, InstanceId, LoadSpec, MethodId,
+    SourceId, load_ability_package,
 };
 use async_stream::stream;
 use axum::extract::{Path, State};
@@ -20,10 +20,10 @@ use axum::{Json, Router};
 use frame_core::{AbilityExpose, Error, ErrorKind, Gateway, InvokeRequest, LocalsScope};
 use futures_core::stream::Stream;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::bootstrap::AppHandle;
-use crate::catalog::{resolve_protocols, WorkspaceCatalog};
+use crate::catalog::{WorkspaceCatalog, resolve_protocols};
 use crate::compose::{apply_expose_delta, reload_one};
 use crate::load_order::{suggest_enable, unload_impact, write_expose_file};
 
@@ -106,9 +106,7 @@ async fn runtime_state(State(state): State<MgmtState>) -> Json<Value> {
         .iter()
         .map(|entry| {
             let kinds = resolve_protocols(&entry.root);
-            let loaded = catalog
-                .iter()
-                .any(|c| c.instance.as_str() == entry.id);
+            let loaded = catalog.iter().any(|c| c.instance.as_str() == entry.id);
             json!({
                 "id": entry.id,
                 "protocols": kinds.iter().map(|k| k.as_str()).collect::<Vec<_>>(),

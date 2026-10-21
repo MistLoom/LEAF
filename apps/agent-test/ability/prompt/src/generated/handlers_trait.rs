@@ -3,7 +3,20 @@ use async_trait::async_trait;
 
 
 #[derive(Debug, serde::Deserialize)]
-pub struct BuildArgs {}
+pub struct BuildArgs {
+#[serde(default)]
+    pub assistant: String,
+#[serde(default)]
+    pub skill_path: String,
+#[serde(default)]
+    pub skill_paths: Vec<String>,
+#[serde(default)]
+    pub skill_root: String,
+#[serde(default)]
+    pub system: String,
+#[serde(default)]
+    pub user: String,
+}
 
 
 #[async_trait]

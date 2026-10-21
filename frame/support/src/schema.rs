@@ -45,9 +45,7 @@ pub fn validate_schema(value: &Value, schema: &Value) -> Result<(), SchemaError>
 }
 
 fn is_unrestricted(schema: &Value) -> bool {
-    schema.is_null()
-        || (schema.is_object()
-            && schema.as_object().is_some_and(|o| o.is_empty()))
+    schema.is_null() || (schema.is_object() && schema.as_object().is_some_and(|o| o.is_empty()))
 }
 
 fn validate_node(value: &Value, schema: &Value, path: &str) -> Result<(), SchemaError> {
@@ -134,7 +132,11 @@ fn matches_type(value: &Value, ty: &str) -> bool {
         "null" => value.is_null(),
         "boolean" => value.is_boolean(),
         "string" => value.is_string(),
-        "integer" => value.is_i64() || value.is_u64() || (value.is_f64() && value.as_f64().unwrap().fract() == 0.0),
+        "integer" => {
+            value.is_i64()
+                || value.is_u64()
+                || (value.is_f64() && value.as_f64().unwrap().fract() == 0.0)
+        }
         "number" => value.is_number(),
         "object" => value.is_object(),
         "array" => value.is_array(),

@@ -189,7 +189,11 @@ pub fn unload_impact(
     collect_dependents(&graph, instance, &mut dependents);
 
     let dep_vec: Vec<String> = dependents.into_iter().collect();
-    let loaded_dep: Vec<String> = dep_vec.iter().filter(|d| loaded.contains(*d)).cloned().collect();
+    let loaded_dep: Vec<String> = dep_vec
+        .iter()
+        .filter(|d| loaded.contains(*d))
+        .cloned()
+        .collect();
     let enabled_dep: Vec<String> = dep_vec
         .iter()
         .filter(|d| expose.resolve(d).enabled)
@@ -228,8 +232,15 @@ pub fn dep_from_value(dep: &Value) -> (String, bool) {
     if let Some(s) = dep.as_str() {
         return (s.to_string(), false);
     }
-    let id = dep.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let optional = dep.get("optional").and_then(|v| v.as_bool()).unwrap_or(false);
+    let id = dep
+        .get("id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let optional = dep
+        .get("optional")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
     (id, optional)
 }
 

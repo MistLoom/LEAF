@@ -14,8 +14,8 @@ mod runtime;
 pub mod web;
 
 pub use assembly::{
-    bootstrap, bootstrap_expose, bootstrap_with_options, default_assembly_path, expose_from_document,
-    WebBoot,
+    WebBoot, bootstrap, bootstrap_expose, bootstrap_with_options, default_assembly_path,
+    expose_from_document,
 };
 pub use profile::{
     apply_plugins_profile, default_plugins_profile_path, default_provider_path,
@@ -24,7 +24,7 @@ pub use profile::{
 pub use runtime::{EcosystemFlags, Runtime};
 
 use frame_core::{InstanceId, InvokeRequest, MethodId, Result};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::sync::Arc;
 
 /// 对已启用生态 Ability 调用 `doctor`。
@@ -46,7 +46,8 @@ pub async fn diagnose_runtime(
         let resp = gateway
             .invoke(InvokeRequest::new(
                 InstanceId::new(id).map_err(|e| frame_core::Error::invalid_args(e.to_string()))?,
-                MethodId::new("doctor").map_err(|e| frame_core::Error::invalid_args(e.to_string()))?,
+                MethodId::new("doctor")
+                    .map_err(|e| frame_core::Error::invalid_args(e.to_string()))?,
                 args,
             ))
             .await?;

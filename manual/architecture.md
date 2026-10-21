@@ -4,7 +4,7 @@ English · [中文](architecture.zh-CN.md)
 
 ## Model
 
-An **app** owns its Abilities under `apps/<app>/ability/<name>`. Ports and cross-ability calls share one **Gateway** envelope: `instance + method + args`.
+An **app** owns its Abilities. Ports and cross-ability calls share one **Gateway** envelope: `instance + method + args`.
 
 ```
 Ports (CLI / HTTP / MCP / Fun / …)
@@ -22,37 +22,28 @@ Event listen and intercept are registered through `AppControl` on the entry app.
 
 ## Layers
 
-| Layer | Path | Role |
-|---|---|---|
-| Contract | `frame/support` | Manifest, Ctx, lifecycle, `#[client]` |
-| Transport | `frame/core`, `frame/port-*` | Gateway, Ports, Expose, controllers |
-| Engine | `apps/ability-core` | Host, EventBus, admission for calls and events |
-| Composition | `frame/compose` | Catalog, Bootstrap, `AppControl` |
-| Abilities | `common/ability/*`, `apps/<app>/ability/*` | Shared Abilities, or one crate owned by a scenario app |
-| Apps | `apps/*` | Scenario process (`agent-test`, `web-agent`) |
-| External SDK | `external/*` | Experimental out-of-tree authoring |
-
-## Ownership
-
-| Owner | Abilities |
+| Layer | Role |
 |---|---|
-| `common` | Shared Abilities (config, store, files, shell, task, kb, the reference samples, and optional `claude_mod` / `dsh_plugin`). `open`. The entry app may call, listen, and intercept them. |
-| `agent-test` | Agent loop (`session`, `turn`, `dispatch`, `chat`, `prompt`, `skill`), `open` |
-| `web-agent` | Reference web application. Compat fixtures live in its tests. |
+| Contract | Manifest, Ctx, lifecycle, client codegen |
+| Transport | Gateway, Ports, Expose, controllers |
+| Engine | Host, event bus, admission for calls and events |
+| Composition | Discovery, bootstrap, `AppControl` |
+| Abilities | Shared or app-owned capability implementations |
+| Apps | Scenario processes and assembly policy |
+
+Node / Python Abilities use the **guest wire protocol** with the same `ability.yml` model as Rust. See [Guest protocol](ability-guest-protocol.zh-CN.md).
+
+## Visibility and governance
+
+- **Shared Abilities**: callable, listenable, and interceptable by the entry app (exact set is assembly-defined).
+- **App-owned Abilities**: owner-only by default; `open: true` allows other apps to call or listen.
+- **Out-of-tree packages**: attach via the guest SDK and wire protocol — not by linking the runtime kernel.
 
 ## Rules
 
-1. Ports depend on `Gateway`; they do not call Ability crates directly
+1. Ports depend on `Gateway`; they do not call Ability implementations directly
 2. Abilities do not branch on whether the caller was MCP, CLI, or LLM tools
 3. Expose gates **Port → Gateway** only; it does not grant a cross-app call
 4. A cross-app call requires `open: true` on the target
-5. Intercept stays with the owning app, except `common` Abilities, which the entry app may intercept. Listen of another scenario app requires `open: true`
+5. Intercept stays with the owning app; listening to another app requires `open: true`
 6. Protocol identity lives in declarations and Ports — not as kernel business types
-7. Out-of-tree packages (e.g. `external/`) must not depend on `frame-core`, ports, or `ability-core`; runtime consumers depend on `frame-compose` only (re-exports as needed)
-
-## Status
-
-- `external/` is experimental
-- Multi-language Abilities (Python, TypeScript, …) are planned; Rust is primary today
-- `apps/agent-test` is the minimal agent example
-- `apps/web-agent` is the reference web agent

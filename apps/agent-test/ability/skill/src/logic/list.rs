@@ -2,7 +2,7 @@
 
 use ability_support::{AbilityCtx, Error, Result};
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::catalog::SkillCatalog;
 
@@ -13,7 +13,8 @@ struct PathArgs {
 }
 
 pub async fn list(_ctx: &dyn AbilityCtx, args: Value) -> Result<Value> {
-    let a: PathArgs = serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
+    let a: PathArgs =
+        serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
     let root = a.root.ok_or_else(|| Error::invalid_args("缺少 root"))?;
     let mut cat = SkillCatalog::new();
     cat.load_root(root)

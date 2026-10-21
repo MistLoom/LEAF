@@ -1,0 +1,11 @@
+framework_version: "node@1"
+id: {{id}}
+open: false
+protocols: [fun]
+depends: []
+stateful: false
+methods:
+  - id: run
+    description: 示例方法
+    input:
+      type: object

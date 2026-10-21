@@ -6,8 +6,9 @@ use crate::ext::{ExtRef, RefOp};
 use crate::hub::SessionHub;
 use crate::iter::{ConversationIter, ItemIter};
 use crate::model::{
-    ContextPolicy, ContextView, Conversation, ConversationBundle, ConversationId, ConversationPatch,
-    ConversationStatus, CreateSpec, ItemDraft, ItemId, ItemPatch, TagOp, TagScope, TagSet, TagStat,
+    ContextPolicy, ContextView, Conversation, ConversationBundle, ConversationId,
+    ConversationPatch, ConversationStatus, CreateSpec, ItemDraft, ItemId, ItemPatch, TagOp,
+    TagScope, TagSet, TagStat,
 };
 use crate::query::{ConversationQuery, ItemQuery, TagFilter};
 use crate::render::{RenderSnapshot, RenderViewSpec};
@@ -146,7 +147,10 @@ impl SessionHandle {
         }
     }
 
-    pub async fn append(&self, draft: ItemDraft) -> Result<crate::model::SessionItem, SessionError> {
+    pub async fn append(
+        &self,
+        draft: ItemDraft,
+    ) -> Result<crate::model::SessionItem, SessionError> {
         let out = self.hub.append(&self.id, &[draft]).await?;
         out.items
             .into_iter()
@@ -591,7 +595,10 @@ impl SessionSelect {
         Ok(self.hub.query(query).await?.items.len() as u64)
     }
 
-    pub async fn read(&self, item_query: ItemQuery) -> Result<Vec<ConversationBundle>, SessionError> {
+    pub async fn read(
+        &self,
+        item_query: ItemQuery,
+    ) -> Result<Vec<ConversationBundle>, SessionError> {
         let ids = self.resolve_ids().await?;
         self.hub.read_many(&ids, item_query).await
     }
@@ -640,9 +647,7 @@ impl SessionSelect {
     async fn resolve_ids(&self) -> Result<Vec<ConversationId>, SessionError> {
         let has_filter = self.query.has_constraint();
         if !has_filter && !self.unbounded {
-            return Err(SessionError::invalid(
-                "批量变更需要过滤条件或显式 all()",
-            ));
+            return Err(SessionError::invalid("批量变更需要过滤条件或显式 all()"));
         }
         let query = ConversationQuery {
             limit: None,

@@ -7,18 +7,18 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use std::task::{Context, Poll};
 
-use async_trait::async_trait;
 use ability_support::remote::{
-    decode_frame, encode_frame, ok_value, Body, CtxOp, Frame, WireError,
+    Body, CtxOp, Frame, WireError, decode_frame, encode_frame, ok_value,
 };
 use ability_support::{
     Ability, AbilityCtx, AbilityProvider, Aspect, BusEvent, ChainStatus, DiscoveryPayload, Effect,
     Error, EventFilter, EventHandler, EventListener, EventNext, EventOpts, EventReg, EventUnreg,
     FeedbackRecord, FeedbackScope, InstanceId, LoadSpec, MethodId, Result, Undo,
 };
+use async_trait::async_trait;
 use serde_json::Value;
 use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader};
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{Mutex, mpsc, oneshot};
 
 struct GuestSlot {
     handler: EventHandler,
@@ -82,7 +82,8 @@ fn bind_guest_feedback() {
     ability_support::feedback::host::install_scope(guest_scope);
     ability_support::feedback::host::forward(Arc::new(|record: FeedbackRecord| {
         if let Ok(fwd) = GUEST_FWD.try_with(|f| f.clone()) {
-            tokio::spawn(async move {
+            // 与 Node / Python 一样：invoke 返回前宿主已经收下这条记录。
+            block_on_ctx(async move {
                 let _ = fwd
                     .bridge
                     .request(Body::Ctx {
@@ -273,17 +274,13 @@ impl AbilityCtx for GuestCtx {
         static NEXT: AtomicU64 = AtomicU64::new(1);
         let guest_id = format!("h{}", NEXT.fetch_add(1, Ordering::Relaxed));
         let mode = handler.mode();
-        self.bridge
-            .handlers
-            .lock()
-            .expect("handlers")
-            .insert(
-                guest_id.clone(),
-                GuestSlot {
-                    handler,
-                    ctx_id: self.ctx_id.clone(),
-                },
-            );
+        self.bridge.handlers.lock().expect("handlers").insert(
+            guest_id.clone(),
+            GuestSlot {
+                handler,
+                ctx_id: self.ctx_id.clone(),
+            },
+        );
         let v = self
             .ctx(CtxOp::Handle {
                 filter,
@@ -448,6 +445,8 @@ async fn run_loop(
 ) -> Result<()> {
     bind_guest_feedback();
     let ability_slot: Arc<Mutex<Option<Arc<dyn Ability>>>> = Arc::new(Mutex::new(None));
+    // 命令帧（invoke / lifecycle）顺序执行。读循环不持有该锁，应答与 run_handle 仍可重入。
+    let command_gate = Arc::new(Mutex::new(()));
     while let Some(line) = rx.recv().await {
         if line.trim().is_empty() {
             continue;
@@ -480,12 +479,14 @@ async fn run_loop(
                         .get(&guest_id)
                         .cloned();
                     let reply = match slot {
-                        Some(slot) => match run_guest_slot(&bridge, slot, event, next_token).await {
-                            Ok(value) => Body::Ok { value },
-                            Err(e) => Body::Err {
-                                error: WireError::from(&e),
-                            },
-                        },
+                        Some(slot) => {
+                            match run_guest_slot(&bridge, slot, event, next_token).await {
+                                Ok(value) => Body::Ok { value },
+                                Err(e) => Body::Err {
+                                    error: WireError::from(&e),
+                                },
+                            }
+                        }
                         None => Body::Err {
                             error: WireError {
                                 kind: "not_found".into(),
@@ -536,8 +537,10 @@ async fn run_loop(
             } => {
                 let ability = ability_slot.lock().await.clone();
                 let bridge = Arc::clone(&bridge);
+                let command_gate = Arc::clone(&command_gate);
                 let cmd_id = frame.id.clone();
                 tokio::spawn(async move {
+                    let _turn = command_gate.lock().await;
                     let reply = {
                         if ability.is_none() {
                             Body::Err {
@@ -558,10 +561,7 @@ async fn run_loop(
                                 span,
                                 undos: Arc::new(Mutex::new(Vec::new())),
                             };
-                            let scope = FeedbackScope {
-                                chain_id,
-                                span,
-                            };
+                            let scope = FeedbackScope { chain_id, span };
                             let fwd = GuestFwd {
                                 bridge: Arc::clone(&bridge),
                                 ctx_id: cmd_id.clone(),
@@ -598,8 +598,10 @@ async fn run_loop(
             } => {
                 let ability = ability_slot.lock().await.clone();
                 let bridge = Arc::clone(&bridge);
+                let command_gate = Arc::clone(&command_gate);
                 let cmd_id = frame.id.clone();
                 tokio::spawn(async move {
+                    let _turn = command_gate.lock().await;
                     let reply = match (ability, InstanceId::new(&instance)) {
                         (Some(ability), Ok(instance)) => {
                             let ctx = GuestCtx {
@@ -611,10 +613,7 @@ async fn run_loop(
                                 span,
                                 undos: Arc::new(Mutex::new(Vec::new())),
                             };
-                            let scope = FeedbackScope {
-                                chain_id,
-                                span,
-                            };
+                            let scope = FeedbackScope { chain_id, span };
                             let fwd = GuestFwd {
                                 bridge: Arc::clone(&bridge),
                                 ctx_id: cmd_id.clone(),
@@ -694,4 +693,3 @@ async fn run_guest_slot(
         }
     }
 }
-

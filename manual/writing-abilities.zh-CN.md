@@ -4,17 +4,19 @@
 
 ## 包布局
 
+每个 Ability 一个目录，根目录放置 `ability.yml`。Rust 包典型结构：
+
 ```
-common/ability/<name>/       # 通用
-apps/<app>/ability/<name>/   # 归属该应用
-  ability.yml
-  build.rs
-  src/
-    logic/          # 业务代码
-    generated/      # codegen 产出
-  cli|mcp|tools|grpc|skill/
-    info.yml
+ability.yml
+build.rs
+src/
+  logic/          # 业务代码
+  generated/      # 声明驱动生成代码
+cli|mcp|tools|grpc|skill/
+  info.yml        # 协议投影（按需）
 ```
+
+共享能力与应用自有能力使用相同布局，由装配发现其归属。
 
 ## Handler 与 Factory
 

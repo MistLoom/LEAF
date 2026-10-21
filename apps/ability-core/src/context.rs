@@ -3,12 +3,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use async_trait::async_trait;
 use ability_support::{
     AbilityCtx, Aspect, ChainStatus, DiscoveryPayload, Effect, Error, EventFilter, EventHandler,
     EventListener, EventOpts, EventReg, InstanceId, InvokeMask, LoadSpec, LocalsScope, MethodId,
     ProtocolKind, Result, Undo,
 };
+use async_trait::async_trait;
 use serde_json::Value;
 use tokio::sync::Mutex;
 
@@ -111,10 +111,7 @@ impl AbilityCtx for InvokeContext {
             }
         }
         if !self.invoke_mask.allows(target.as_str()) {
-            return Err(Error::unavailable(format!(
-                "调用链策略拒绝实例 {}",
-                target
-            )));
+            return Err(Error::unavailable(format!("调用链策略拒绝实例 {}", target)));
         }
         self.host
             .authorize_call(self.instance.as_str(), target.as_str())?;
@@ -137,9 +134,7 @@ impl AbilityCtx for InvokeContext {
     fn dep(&self, id_or_alias: &str) -> Result<InstanceId> {
         let id = self.lookup_dep(id_or_alias)?;
         if !self.invoke_mask.allows(id.as_str()) {
-            return Err(Error::unavailable(format!(
-                "调用链策略拒绝实例 {id}"
-            )));
+            return Err(Error::unavailable(format!("调用链策略拒绝实例 {id}")));
         }
         Ok(id)
     }
@@ -151,15 +146,21 @@ impl AbilityCtx for InvokeContext {
         match self.protocol_filter {
             Some(kind) => items
                 .into_iter()
-                .filter(|d| self.host.instance_supports_protocol(d.instance.as_str(), kind))
+                .filter(|d| {
+                    self.host
+                        .instance_supports_protocol(d.instance.as_str(), kind)
+                })
                 .collect(),
             None => items,
         }
     }
 
     async fn subscribe(&self, filter: EventFilter) -> Result<Box<dyn EventListener + Send>> {
-        self.host
-            .authorize_event(self.instance.as_str(), &filter, ability_support::EventMode::Message)?;
+        self.host.authorize_event(
+            self.instance.as_str(),
+            &filter,
+            ability_support::EventMode::Message,
+        )?;
         let listener = self.host.events.listen(filter).await;
         self.host.bind_event_id(&self.instance, listener.id());
         Ok(Box::new(listener))

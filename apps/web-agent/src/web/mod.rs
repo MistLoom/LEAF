@@ -18,7 +18,11 @@ use crate::runtime::Runtime;
 
 pub use state::WebState;
 
-pub async fn serve(app: AppHandle, host: &str, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn serve(
+    app: AppHandle,
+    host: &str,
+    port: u16,
+) -> Result<(), Box<dyn std::error::Error>> {
     let restored = persist::restore_all(&app.gateway).await;
     let (events_tx, _) = broadcast::channel(256);
     driver::spawn_driver(&app, events_tx.clone());

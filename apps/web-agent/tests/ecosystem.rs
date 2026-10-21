@@ -22,19 +22,18 @@ fn eco_dsh_tool_name(names: &[String], tool_tail: &str) -> Option<String> {
         .iter()
         .find(|n| {
             n.starts_with("eco__dsh__")
-                && (n.ends_with(&format!("__{tool_tail}")) || *n == &format!("eco__dsh__{tool_tail}"))
+                && (n.ends_with(&format!("__{tool_tail}"))
+                    || *n == &format!("eco__dsh__{tool_tail}"))
         })
         .cloned()
 }
 
 fn node_ok() -> bool {
-    std::process::Command::new(
-        std::env::var("LEAF_PLUGIN_NODE").unwrap_or_else(|_| "node".into()),
-    )
-    .arg("--version")
-    .status()
-    .map(|s| s.success())
-    .unwrap_or(false)
+    std::process::Command::new(std::env::var("LEAF_PLUGIN_NODE").unwrap_or_else(|_| "node".into()))
+        .arg("--version")
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
 }
 
 fn claude_mod_expose(mod_path: &PathBuf) -> AbilityExpose {
@@ -86,11 +85,7 @@ async fn claude_mod_fixture_invoke_hook() {
         ))
         .await
         .expect("invoke");
-    assert!(
-        resp.data.get("error").is_none(),
-        "钩子失败: {}",
-        resp.data
-    );
+    assert!(resp.data.get("error").is_none(), "钩子失败: {}", resp.data);
 }
 
 fn dsh_expose(plugin_path: &PathBuf) -> AbilityExpose {
@@ -242,11 +237,7 @@ async fn claude_mod_tool_check_blocks_dispatch_run() {
         ))
         .await
         .expect_err("应被 tool.check 拦截");
-    assert!(
-        err.to_string().contains("fixture_block"),
-        "错误: {}",
-        err
-    );
+    assert!(err.to_string().contains("fixture_block"), "错误: {}", err);
 }
 
 #[tokio::test]
@@ -384,11 +375,17 @@ async fn claude_mod_and_dsh_plugin_coexist() {
     let boot = bootstrap_expose(expose).await.expect("bootstrap");
     let report = diagnose(&boot).await.expect("doctor");
     assert_eq!(
-        report.get("claude_mod").and_then(|v| v.get("ok")).and_then(|v| v.as_bool()),
+        report
+            .get("claude_mod")
+            .and_then(|v| v.get("ok"))
+            .and_then(|v| v.as_bool()),
         Some(true)
     );
     assert_eq!(
-        report.get("dsh_plugin").and_then(|v| v.get("ok")).and_then(|v| v.as_bool()),
+        report
+            .get("dsh_plugin")
+            .and_then(|v| v.get("ok"))
+            .and_then(|v| v.as_bool()),
         Some(true)
     );
     let resp = boot
@@ -527,7 +524,8 @@ async fn both_ecosystems_hook_and_tool_call() {
         })
         .unwrap_or_default();
     for tail in ["leaf_echo", "cordis_echo"] {
-        let llm_name = eco_dsh_tool_name(&names, tail).unwrap_or_else(|| panic!("{tail} 未注册: {names:?}"));
+        let llm_name =
+            eco_dsh_tool_name(&names, tail).unwrap_or_else(|| panic!("{tail} 未注册: {names:?}"));
         let resp = boot
             .app
             .gateway

@@ -4,10 +4,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use frame_core::{
-    DefaultGrpcController, Gateway, Port, ProtocolController, resolve_target,
-};
-use tonic::{transport::Server, Request, Response, Status};
+use frame_core::{DefaultGrpcController, Gateway, Port, ProtocolController, resolve_target};
+use tonic::{Request, Response, Status, transport::Server};
 use tracing::info;
 
 pub mod proto {
@@ -15,7 +13,9 @@ pub mod proto {
 }
 
 use proto::leaf_gateway_server::{LeafGateway, LeafGatewayServer};
-use proto::{CatalogRequest, CatalogResponse, InvokeRequest as GrpcInvoke, InvokeResponse as GrpcResponse};
+use proto::{
+    CatalogRequest, CatalogResponse, InvokeRequest as GrpcInvoke, InvokeResponse as GrpcResponse,
+};
 
 pub struct GrpcPort {
     addr: SocketAddr,
@@ -59,10 +59,7 @@ impl LeafGateway for GrpcService {
         Ok(Response::new(CatalogResponse { entries }))
     }
 
-    async fn invoke(
-        &self,
-        request: Request<GrpcInvoke>,
-    ) -> Result<Response<GrpcResponse>, Status> {
+    async fn invoke(&self, request: Request<GrpcInvoke>) -> Result<Response<GrpcResponse>, Status> {
         let req = request.into_inner();
         let args: serde_json::Value =
             serde_json::from_str(&req.args_json).unwrap_or(serde_json::Value::Null);
@@ -73,17 +70,10 @@ impl LeafGateway for GrpcService {
             format!("{}.{}", req.instance, req.method)
         };
         let (instance, method) = resolve_target(&target, &catalog)
-        .map_err(|e| Status::invalid_argument(e.to_string()))?;
+            .map_err(|e| Status::invalid_argument(e.to_string()))?;
         match self
             .controller
-            .invoke(
-                self.gateway.as_ref(),
-                instance,
-                method,
-                args,
-                None,
-                None,
-            )
+            .invoke(self.gateway.as_ref(), instance, method, args, None, None)
             .await
         {
             Ok(resp) => {

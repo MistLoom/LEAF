@@ -3,14 +3,19 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use super::ability::AbilityDecl;
-use super::protocol::{CliInfo, GrpcInfo, McpInfo, ProtocolInfo, ProtocolKind, SkillInfo, ToolsInfo};
+use super::ability::{AbilityDecl, RuntimeKind};
+use super::manifest_build::manifest_from_decl;
+use super::protocol::{
+    CliInfo, GrpcInfo, McpInfo, ProtocolInfo, ProtocolKind, SkillInfo, ToolsInfo,
+};
+use crate::manifest::AbilityManifest;
 
 /// 从磁盘解析的能力包元数据。
 #[derive(Clone, Debug)]
 pub struct AbilityPackageMeta {
     pub root: PathBuf,
     pub decl: AbilityDecl,
+    pub runtime_kind: RuntimeKind,
     pub protocols: BTreeSet<ProtocolKind>,
     pub cli: Option<CliInfo>,
     pub mcp: Option<McpInfo>,
@@ -55,5 +60,10 @@ impl AbilityPackageMeta {
 
     pub fn protocol_info_path(root: &Path, kind: ProtocolKind) -> PathBuf {
         root.join(kind.dir_name()).join("info.yml")
+    }
+
+    /// 将声明转为握手用 manifest。
+    pub fn to_manifest(&self) -> Result<AbilityManifest, String> {
+        manifest_from_decl(&self.decl)
     }
 }

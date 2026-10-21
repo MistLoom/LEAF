@@ -115,9 +115,7 @@ impl ToolChoice {
     pub fn function(name: impl Into<String>) -> Self {
         Self::Function(ToolChoiceFunction {
             kind: ToolCallKind::Function,
-            function: ToolChoiceName {
-                name: name.into(),
-            },
+            function: ToolChoiceName { name: name.into() },
         })
     }
 }

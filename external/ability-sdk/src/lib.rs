@@ -3,30 +3,30 @@
 //! 跨能力调用：对方 crate 用 [`client`] 声明方法签名；本侧 `use FooExt` 后
 //! `ctx.foo().method(typed_args)`（声明合并）。动态 id 仍可用 `call!` / [`AbilityRef`]。
 
-mod invoke;
-mod guest;
 mod cli;
+mod guest;
+mod invoke;
 
 pub use ability_support::{
-    sdk_client as client, host_event, Ability, AbilityCtx, AbilityId, AbilityManifest,
-    AbilityProvider, AbilitySpec, Aspect, BusEvent, CatalogEntry, ChainStatus, CtxFnAbility,
-    Dependency, DiscoveryPayload, Effect, Error, ErrorKind, EventClass, EventDecl, EventDir,
-    EventFilter, EventHandler, EventListener, EventMiddleware, EventMode, EventNext, EventOpts,
-    EventPipeline, EventReg, EventSink, FactoryProvider, FeedbackProcessor, FeedbackRecord, FeedbackScope,
-    FnAbility, InstanceId, Lifecycle, LoadSpec, MethodId, MethodMeta, Next, Result, SourceId,
-    StaticProvider, TagFilter, Undo, box_fut, box_life_fut,
+    Ability, AbilityCtx, AbilityId, AbilityManifest, AbilityProvider, AbilitySpec, Aspect,
+    BusEvent, CatalogEntry, ChainStatus, CtxFnAbility, Dependency, DiscoveryPayload, Effect, Error,
+    ErrorKind, EventClass, EventDecl, EventDir, EventFilter, EventHandler, EventListener,
+    EventMiddleware, EventMode, EventNext, EventOpts, EventPipeline, EventReg, EventSink,
+    FactoryProvider, FeedbackProcessor, FeedbackRecord, FeedbackScope, FnAbility, InstanceId,
+    Lifecycle, LoadSpec, MethodId, MethodMeta, Next, ProtocolKind, Result, SourceId,
+    StaticProvider, TagFilter, Undo, box_fut, box_life_fut, host_event, sdk_client as client,
 };
-pub use invoke::{AbilityRef, MethodRef};
-pub use guest::{serve, serve_stdio};
 pub use cli::build_standalone;
+pub use guest::{serve, serve_stdio};
+pub use invoke::{AbilityRef, MethodRef};
 
 pub mod prelude {
     pub use super::invoke::AbilityRef;
     pub use super::{
-        client, AbilityCtx, AbilityProvider, AbilitySpec, Aspect, Error, Lifecycle, Result,
-        ability, call, emit, feedback, handler, life, method_id,
+        AbilityCtx, AbilityProvider, AbilitySpec, Aspect, Error, Lifecycle, Result, ability, call,
+        client, emit, feedback, handler, life, method_id,
     };
-    pub use serde_json::{json, Value};
+    pub use serde_json::{Value, json};
 }
 
 #[doc(hidden)]
@@ -72,11 +72,35 @@ macro_rules! emit {
     };
 }
 
+#[doc(hidden)]
+pub use ability_support::feedback::assert_tag as __assert_tag;
+#[doc(hidden)]
+pub use ability_support::feedback::submit as __feedback_submit;
+
+/// 投递反馈。路径走本 crate，外部工程不必直接依赖 ability-support。
 #[macro_export]
 macro_rules! feedback {
-    ($($t:tt)*) => {
-        ::ability_support::feedback!($($t)*);
-    };
+    ([$($tag:literal),* $(,)?], $($t:tt)+) => {{
+        $(
+            const _: () = $crate::__assert_tag($tag);
+        )*
+        $crate::__feedback_submit(
+            env!("CARGO_PKG_NAME"),
+            module_path!(),
+            &[$($tag),*],
+            format!($($t)+),
+        );
+    }};
+    ($tags:expr, $($t:tt)+) => {{
+        let __tags = &$tags;
+        let __tags: &[&str] = ::std::convert::AsRef::as_ref(__tags);
+        $crate::__feedback_submit(
+            env!("CARGO_PKG_NAME"),
+            module_path!(),
+            __tags,
+            format!($($t)+),
+        );
+    }};
 }
 
 #[macro_export]

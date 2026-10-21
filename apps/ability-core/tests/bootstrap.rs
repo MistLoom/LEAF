@@ -2,12 +2,12 @@ mod common;
 
 use std::sync::Arc;
 
+use ability_core::AbilityHost;
 use ability_support::{
     Ability, AbilityManifest, AbilityProvider, CtxFnAbility, InstanceId, LoadSpec, MethodId,
     SourceId, StaticProvider,
 };
 use frame_core::{Gateway, InvokeRequest};
-use ability_core::AbilityHost;
 use serde_json::json;
 
 struct EntryProvider;
@@ -18,7 +18,10 @@ impl AbilityProvider for EntryProvider {
         common::manifest("entry", &["boot"])
     }
 
-    async fn create(&self, _config: serde_json::Value) -> ability_support::Result<Arc<dyn Ability>> {
+    async fn create(
+        &self,
+        _config: serde_json::Value,
+    ) -> ability_support::Result<Arc<dyn Ability>> {
         let m = common::manifest("entry", &["boot"]);
         Ok(Arc::new(CtxFnAbility::new(m, |ctx, _| {
             Box::pin(async move {

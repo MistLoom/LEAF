@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use frame_core::{
-    resolve_target, CatalogEntry, DefaultMcpController, Error, Gateway, Port, ProtocolController,
+    CatalogEntry, DefaultMcpController, Error, Gateway, Port, ProtocolController, resolve_target,
 };
 use rmcp::handler::server::ServerHandler;
 use rmcp::model::{
@@ -27,11 +27,7 @@ pub struct McpPort {
 
 impl McpPort {
     pub fn new(server_name: impl Into<String>, server_version: impl Into<String>) -> Self {
-        Self::with_controller(
-            server_name,
-            server_version,
-            Arc::new(DefaultMcpController),
-        )
+        Self::with_controller(server_name, server_version, Arc::new(DefaultMcpController))
     }
 
     pub fn with_controller(
@@ -153,7 +149,9 @@ impl ServerHandler for McpGatewayHandler {
     fn get_tool(&self, name: &str) -> Option<Tool> {
         let cat = self.gateway.catalog();
         let (inst, method) = resolve_target(name, &cat).ok()?;
-        self.gateway.get_entry(&inst, &method).map(entry_to_mcp_tool)
+        self.gateway
+            .get_entry(&inst, &method)
+            .map(entry_to_mcp_tool)
     }
 }
 

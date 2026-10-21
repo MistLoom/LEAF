@@ -1,7 +1,7 @@
 //! 业务逻辑：defs
 
-use ability_support::{method_catalog, AbilityCtx, ProtocolKind, Result};
-use serde_json::{json, Value};
+use ability_support::{AbilityCtx, ProtocolKind, Result, method_catalog};
+use serde_json::{Value, json};
 
 use crate::bridge::catalog_to_tool_defs;
 

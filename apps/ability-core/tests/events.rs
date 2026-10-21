@@ -2,12 +2,12 @@ mod common;
 
 use std::sync::Arc;
 
+use ability_core::AbilityHost;
 use ability_support::{
-    Ability, CtxFnAbility, EventClass, EventFilter, FnAbility, InstanceId, LoadSpec,
-    MethodId, SourceId, StaticProvider, UserEvent, UserEventSink,
+    Ability, CtxFnAbility, EventClass, EventFilter, FnAbility, InstanceId, LoadSpec, MethodId,
+    SourceId, StaticProvider, UserEvent, UserEventSink,
 };
 use frame_core::InvokeRequest;
-use ability_core::AbilityHost;
 use serde_json::json;
 
 #[tokio::test]
@@ -182,11 +182,11 @@ async fn user_event_only_from_host() {
 
 #[tokio::test]
 async fn handle_order_pipeline_middleware_short_circuit() {
-    use ability_support::{
-        AbilityEvent, EventHandler, EventMiddleware, EventNext, EventOpts, EventPipeline, EventSink,
-        InstanceId, Result,
-    };
     use ability_core::EventBus;
+    use ability_support::{
+        AbilityEvent, EventHandler, EventMiddleware, EventNext, EventOpts, EventPipeline,
+        EventSink, InstanceId, Result,
+    };
     use tokio::sync::Mutex;
 
     let bus = EventBus::new();
@@ -195,7 +195,10 @@ async fn handle_order_pipeline_middleware_short_circuit() {
     struct Pipe(Arc<Mutex<Vec<String>>>, &'static str);
     #[async_trait::async_trait]
     impl EventPipeline for Pipe {
-        async fn process(&self, mut event: ability_support::BusEvent) -> Result<ability_support::BusEvent> {
+        async fn process(
+            &self,
+            mut event: ability_support::BusEvent,
+        ) -> Result<ability_support::BusEvent> {
             self.0.lock().await.push(self.1.into());
             let n = event.payload()["n"].as_i64().unwrap_or(0);
             event.payload_mut()["n"] = json!(n + 1);
@@ -286,10 +289,7 @@ async fn handle_order_pipeline_middleware_short_circuit() {
     tokio::time::sleep(std::time::Duration::from_millis(30)).await;
 
     let steps = log.lock().await.clone();
-    assert_eq!(
-        steps,
-        vec!["b-in", "a-in", "p0", "p1", "a-out", "b-out"]
-    );
+    assert_eq!(steps, vec!["b-in", "a-in", "p0", "p1", "a-out", "b-out"]);
     let got = seen.lock().await.clone();
     assert_eq!(got.len(), 2);
     assert!(got.iter().all(|s| s == "msg:2"));

@@ -2,9 +2,7 @@
 
 use std::sync::Arc;
 
-use frame_core::{
-    AbilityExpose, AccessKind, ControllerRegistry, ProtocolController, ProtocolKind,
-};
+use frame_core::{AbilityExpose, AccessKind, ControllerRegistry, ProtocolController, ProtocolKind};
 use serde_json::Value;
 
 /// 组合根开放管理入口。

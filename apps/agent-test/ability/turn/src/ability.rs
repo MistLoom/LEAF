@@ -9,10 +9,10 @@ use ability_support::{
 };
 use async_trait::async_trait;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::generated::manifest;
-use crate::loop_runner::{run_turn, spawn_turn, RunInput, SpawnInput, TurnConfig};
+use crate::loop_runner::{RunInput, SpawnInput, TurnConfig, run_turn, spawn_turn};
 
 pub fn provider() -> Arc<dyn AbilityProvider> {
     AbilitySpec::from_manifest(manifest::manifest()).into_factory(|config| async move {
@@ -116,8 +116,8 @@ impl Ability for TurnAbility {
                 }))
             }
             "cancel" => {
-                let a: CancelArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
+                let a: CancelArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
                 let g = self.cancels.lock().expect("turn cancels");
                 if let Some(flag) = g.get(&a.turn_id) {
                     flag.store(true, Ordering::Relaxed);
@@ -127,8 +127,8 @@ impl Ability for TurnAbility {
                 }
             }
             "spawn" => {
-                let a: SpawnArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
+                let a: SpawnArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
                 let turn_id = uuid::Uuid::new_v4().to_string();
                 let cancel = Arc::new(AtomicBool::new(false));
                 {

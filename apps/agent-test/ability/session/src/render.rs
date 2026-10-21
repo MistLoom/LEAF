@@ -26,11 +26,7 @@ impl RenderWindow {
         }
     }
 
-    pub fn to_item_query(
-        &self,
-        kinds: Option<&[ItemKind]>,
-        tags: Option<&TagFilter>,
-    ) -> ItemQuery {
+    pub fn to_item_query(&self, kinds: Option<&[ItemKind]>, tags: Option<&TagFilter>) -> ItemQuery {
         let (after_seq, before_seq, limit, reverse) = match self {
             Self::Latest { limit } => (None, None, Some(*limit), true),
             Self::After { seq, limit } => (Some(*seq), None, Some(*limit), false),
@@ -237,7 +233,9 @@ impl RenderLoader {
         if let Some(hit) = self.cache.get(&key).await {
             return Ok(hit);
         }
-        let query = spec.window.to_item_query(spec.kinds.as_deref(), spec.tags.as_ref());
+        let query = spec
+            .window
+            .to_item_query(spec.kinds.as_deref(), spec.tags.as_ref());
         let page = self.store.query_items(id, &query).await?;
         let snapshot = project_snapshot(&conv, spec, page.items, page.next, &self.policy);
         self.cache.put(key, snapshot.clone()).await;
@@ -270,7 +268,9 @@ fn project_snapshot(
         items.reverse();
     }
     let truncated = next_raw.is_some();
-    let next = next_raw.and_then(|s| s.parse::<u64>().ok()).map(|seq| RenderCursor { seq });
+    let next = next_raw
+        .and_then(|s| s.parse::<u64>().ok())
+        .map(|seq| RenderCursor { seq });
     let nodes = items
         .iter()
         .map(|item| project_node(item, policy))

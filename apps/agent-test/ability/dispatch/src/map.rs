@@ -29,10 +29,7 @@ impl NameMap {
 
     pub fn resolve(&self, function_name: &str) -> Result<&(InstanceId, MethodId), Error> {
         self.to_target.get(function_name).ok_or_else(|| {
-            Error::from_ext(
-                ErrorKind::NotFound,
-                format!("工具名称未映 {function_name}"),
-            )
+            Error::from_ext(ErrorKind::NotFound, format!("工具名称未映 {function_name}"))
         })
     }
 }

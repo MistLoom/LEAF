@@ -1,7 +1,7 @@
 //! prompt 经 SkillExt 注入 skill，不引用对方实现类型。
 
-use ability_support::{InstanceId, LoadSpec, MethodId, SourceId};
 use ability_core::AbilityHost;
+use ability_support::{InstanceId, LoadSpec, MethodId, SourceId};
 use serde_json::json;
 
 #[tokio::test]

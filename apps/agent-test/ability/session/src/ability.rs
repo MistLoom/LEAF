@@ -2,13 +2,13 @@
 
 use std::sync::Arc;
 
-use ai_protocol::{Message, ToolCall};
 use ability_support::{
     Ability, AbilityCtx, AbilityManifest, AbilityProvider, AbilitySpec, Error, MethodId, Result,
 };
+use ai_protocol::{Message, ToolCall};
 use async_trait::async_trait;
 use serde::Deserialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::generated::manifest;
 use crate::hub::SessionHub;
@@ -17,13 +17,12 @@ use crate::query::ConversationQuery;
 use crate::snapshot::{ImportMode, SessionSnapshot};
 
 pub fn provider() -> Arc<dyn AbilityProvider> {
-    AbilitySpec::from_manifest(manifest::manifest())
-        .into_factory(|_config| async {
-            Ok(Arc::new(SessionAbility {
-                manifest: manifest::manifest(),
-                hub: SessionHub::memory(),
-            }) as Arc<dyn Ability>)
-        })
+    AbilitySpec::from_manifest(manifest::manifest()).into_factory(|_config| async {
+        Ok(Arc::new(SessionAbility {
+            manifest: manifest::manifest(),
+            hub: SessionHub::memory(),
+        }) as Arc<dyn Ability>)
+    })
 }
 
 struct SessionAbility {
@@ -81,9 +80,7 @@ fn map_err(e: crate::error::SessionError) -> Error {
 }
 
 fn build_assistant_message(text: Option<String>, tool_calls: Option<Vec<ToolCall>>) -> Message {
-    let has_tools = tool_calls
-        .as_ref()
-        .is_some_and(|c| !c.is_empty());
+    let has_tools = tool_calls.as_ref().is_some_and(|c| !c.is_empty());
     if has_tools {
         let mut msg = Message::assistant_tool_calls(tool_calls.unwrap());
         if let Some(t) = text.filter(|s| !s.is_empty()) {
@@ -142,39 +139,31 @@ impl Ability for SessionAbility {
                 Ok(json!({ "ok": true }))
             }
             "append_assistant" => {
-                let a: AppendAssistantArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
-                let cid: ConversationId = a
-                    .id
-                    .parse()
-                    .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
+                let a: AppendAssistantArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
+                let cid: ConversationId =
+                    a.id.parse()
+                        .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
                 let msg = build_assistant_message(a.text, a.tool_calls);
                 self.hub
                     .session(cid)
                     .append_message(msg)
                     .await
                     .map_err(map_err)?;
-                ctx.emit(
-                    "items_appended",
-                    json!({ "id": a.id, "role": "assistant" }),
-                )
-                .await?;
+                ctx.emit("items_appended", json!({ "id": a.id, "role": "assistant" }))
+                    .await?;
                 Ok(json!({ "ok": true }))
             }
             "append_tool_results" => {
-                let a: AppendToolResultsArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
+                let a: AppendToolResultsArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
                 let session_id = a.id.clone();
-                let cid: ConversationId = a
-                    .id
-                    .parse()
-                    .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
+                let cid: ConversationId =
+                    a.id.parse()
+                        .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
                 let count = a.messages.len();
-                let drafts: Vec<ItemDraft> = a
-                    .messages
-                    .into_iter()
-                    .map(ItemDraft::message)
-                    .collect();
+                let drafts: Vec<ItemDraft> =
+                    a.messages.into_iter().map(ItemDraft::message).collect();
                 self.hub
                     .session(cid)
                     .append_many(drafts)
@@ -218,8 +207,8 @@ impl Ability for SessionAbility {
                 serde_json::to_value(snap).map_err(|e| Error::failed(e.to_string()))
             }
             "import" => {
-                let a: ImportArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
+                let a: ImportArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
                 let mode = match a.mode.as_deref() {
                     Some("restore") => ImportMode::Restore,
                     _ => ImportMode::Copy,
@@ -230,16 +219,13 @@ impl Ability for SessionAbility {
                 Ok(json!({ "id": id }))
             }
             "compact" => {
-                let a: CompactArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
-                let cid: ConversationId = a
-                    .id
-                    .parse()
-                    .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
-                let marker = ItemDraft::system(
-                    a.marker_text
-                        .unwrap_or_else(|| "[上下文已压缩]".into()),
-                );
+                let a: CompactArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
+                let cid: ConversationId =
+                    a.id.parse()
+                        .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
+                let marker =
+                    ItemDraft::system(a.marker_text.unwrap_or_else(|| "[上下文已压缩]".into()));
                 self.hub
                     .session(cid)
                     .compact(a.until_seq, marker)
@@ -248,12 +234,11 @@ impl Ability for SessionAbility {
                 Ok(json!({ "ok": true }))
             }
             "fork" => {
-                let a: ForkArgs = serde_json::from_value(args)
-                    .map_err(|e| Error::invalid_args(e.to_string()))?;
-                let cid: ConversationId = a
-                    .id
-                    .parse()
-                    .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
+                let a: ForkArgs =
+                    serde_json::from_value(args).map_err(|e| Error::invalid_args(e.to_string()))?;
+                let cid: ConversationId =
+                    a.id.parse()
+                        .map_err(|e: uuid::Error| Error::invalid_args(e.to_string()))?;
                 let child = if let Some(seq) = a.until_seq {
                     self.hub.session(cid).fork_until(seq).await
                 } else {
