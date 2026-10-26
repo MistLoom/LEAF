@@ -87,6 +87,17 @@ LEAF scopes itself to the **capability-layer runtime**; the application main loo
 - Config parsers
 - Code generators
 
+Ability Guest SDK implementations (under `SDK/`, all speaking `guest-protocol-1` stdio JSON lines):
+
+| Language SDK | Directory | `framework_version` | Project marker | Guest entry | manifest/methods/lifecycle | ctx.call/dep/catalog | local_get/set | emit/subscribe/handle/event_next | load/unload | feedback | chain_status/share | push_effect+undo | register_aspect |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rust (wire-protocol lib) | `SDK/ability-sdk` | `rust@1` | `Cargo.toml` | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (in-process) |
+| Node | `SDK/ability-sdk-ts` | `node@1` (`ts@1` alias) | `package.json` | `src/serve.mjs` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (rejected as Guest) |
+| Python | `SDK/ability-sdk-py` | `python@1` (`py@1` alias) | `pyproject.toml` | `src/serve.py` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (rejected as Guest) |
+| Cangjie | `SDK/ability-sdk-cj` | `cangjie@1` (`cj@1` alias) | `cjpm.toml` | `src/serve.cj` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (rejected as Guest) |
+
+Guest vs in-process Rust: Guests do not support `register_aspect` (in-process aspects are Rust-runtime only). Protocol details: [Guest wire protocol](manual/ability-guest-protocol.zh-CN.md).
+
 Unified governance where it matters, local reuse where it helps. Details: [Architecture](manual/architecture.md).
 
 ---

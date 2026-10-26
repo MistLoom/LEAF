@@ -87,6 +87,17 @@ LEAF 的范围收敛在**能力层运行时**，应用主循环由使用方管�
 - 配置解析器
 - 代码生成器
 
+Ability Guest SDK 各语言实现（位于 `SDK/`，均走 `guest-protocol-1` stdio JSON 行帧）：
+
+| 语言 SDK | 目录 | `framework_version` | 工程特征 | Guest 入口 | manifest/methods/lifecycle | ctx.call/dep/catalog | local_get/set | emit/subscribe/handle/event_next | load/unload | feedback | chain_status/share | push_effect+undo | register_aspect |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Rust（线协议库） | `SDK/ability-sdk` | `rust@1` | `Cargo.toml` | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅（进程内） |
+| Node | `SDK/ability-sdk-ts` | `node@1`（`ts@1` 同义） | `package.json` | `src/serve.mjs` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌（Guest 拒绝） |
+| Python | `SDK/ability-sdk-py` | `python@1`（`py@1` 同义） | `pyproject.toml` | `src/serve.py` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌（Guest 拒绝） |
+| 仓颉 | `SDK/ability-sdk-cj` | `cangjie@1`（`cj@1` 同义） | `cjpm.toml` | `src/serve.cj` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌（Guest 拒绝） |
+
+Guest 与进程内 Rust 的差异：Guest 不支持 `register_aspect`（进程内切面仅 Rust 运行时可用）。协议细节见 [Guest 线协议](manual/ability-guest-protocol.zh-CN.md)。
+
 既保证统一治理，也允许局部复用。架构细节见 [架构概览](manual/architecture.zh-CN.md)。
 
 ---

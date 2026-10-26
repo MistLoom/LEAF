@@ -8,7 +8,8 @@ apps/ability-core/data/
 target
 /scripts
 /docs
-Agent.md
+Agent_.md
+AGENT_.md
 apps/admin/
 apps/file-guard/
 ability/mech
@@ -19,3 +20,11 @@ apps/web-agent/vendor/deepseek-harness/
 apps/web-agent/vendor/dsh-marketplace/
 apps/web-agent/vendor/dsh-npm-profile/node_modules/
 .thinking
+
+# Cangjie internal unit tests and stubs (local only)
+SDK/ability-sdk-cj/src/*_test.cj
+SDK/ability-sdk-cj/src/test_stub.cj
+external/**/src/*_test.cj
+external/**/src/test_stub.cj
+external/**/tests_internal/
+.atomcode/
