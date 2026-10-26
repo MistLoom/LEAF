@@ -1,5 +1,6 @@
 framework_version: "1"
 id: codegen.fixture
+leaf_builtin: true
 protocols: [cli, http, fun]
 depends: []
 stateful: false

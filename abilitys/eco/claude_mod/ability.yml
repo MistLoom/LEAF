@@ -1,5 +1,6 @@
 framework_version: "1"
 id: claude_mod
+leaf_builtin: true
 open: true
 protocols: [fun]
 depends: []

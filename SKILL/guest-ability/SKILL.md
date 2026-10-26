@@ -12,6 +12,7 @@ description: >-
 - 落在 `external/<name>` 或允许的 Ability 落点；不要为单个 Ability 改 `/SDK` 契约。
 - 内部完备测例不进公开 git。
 - Guest 拒绝 `register_aspect`。
+- Guest/`external` 包**不是**框架内置能力，**不要**伪装成框架内置身份。
 
 ## 运行时
 

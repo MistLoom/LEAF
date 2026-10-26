@@ -57,6 +57,8 @@ methods:
       required: [text]
 ```
 
+不要把 `external/`、模板脚手架或用户新建能力伪装成框架内置身份；随仓内置的识别与维护见 `framework-update`，落点见 `ability-placement`、`guest-ability`。
+
 ### 3. Handler
 
 - 每 method → `src/logic/<method>.rs`，导出生成 provider。
@@ -78,6 +80,7 @@ methods:
 ### 6. 自检
 
 - [ ] 未改四个禁止目录；声明与实现一致
+- [ ] 未将 `external`/模板/用户新建能力伪装成框架内置身份
 - [ ] 无 Port 分支；不读场景配置；公开树无内部完备测例
 
 ## 反模式

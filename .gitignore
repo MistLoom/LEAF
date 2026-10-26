@@ -28,3 +28,10 @@ external/**/src/*_test.cj
 external/**/src/test_stub.cj
 external/**/tests_internal/
 .atomcode/
+external/rawprism
+
+# Monitor local smoke / sample dumps (never commit)
+tui-smoke.jsonl
+monitor.jsonl
+monitor-*.jsonl
+**/monitor-response-samples.md

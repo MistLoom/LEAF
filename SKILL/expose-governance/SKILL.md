@@ -34,3 +34,5 @@ Ports → Gateway (instance + method + args) → 入口应用
 
 - 为「上 HTTP」设 `open: true`（应配 Expose）  
 - 在 Ability 内替换 Gateway 治理
+
+框架内置身份与 Expose 无关；落点边界见 `ability-placement`，维护约定见 `framework-update`。

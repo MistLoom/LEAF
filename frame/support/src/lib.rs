@@ -19,6 +19,7 @@ mod invoke_mask;
 mod lifecycle;
 mod load;
 mod manifest;
+pub mod monitor;
 pub mod remote;
 mod schema;
 mod spec;

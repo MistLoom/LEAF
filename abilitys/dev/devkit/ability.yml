@@ -1,5 +1,6 @@
 framework_version: "1"
 id: devkit
+leaf_builtin: true
 protocols: [http, fun]
 depends: []
 stateful: false

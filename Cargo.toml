@@ -37,6 +37,7 @@ members = [
     "frame/port-grpc",
     "frame/compose",
     "apps/ability-core",
+    "apps/monitor",
     "apps/agent-test",
     "apps/web-agent",
 ]

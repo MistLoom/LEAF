@@ -1,5 +1,6 @@
 framework_version: "1"
 id: read_file
+leaf_builtin: true
 open: true
 protocols: [tools, mcp, cli, http, fun]
 depends: []
