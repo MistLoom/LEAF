@@ -112,7 +112,7 @@ Unified governance where it matters, local reuse where it helps. Details: [Archi
 | **Declaration-driven codegen** | `ability.yml` and protocol `info.yml` generate Providers; business logic lives in `src/logic/` with less boilerplate and fewer adapter forks |
 | **Building blocks for AI systems** | Sessions, multi-turn tool loops, Skills, OpenAI-compatible chat, and more; the agent is one consumer among many |
 | **Rust runtime** | Workspace targets Rust edition 2024—memory safety, performance, and deployability |
-| **Removable built-in monitoring** | Optional `apps/monitor`: call-chain / lifecycle events, stats & graph, CLI / realtime TUI / HTTP / fun; delete the app to strip the surface |
+| **Optional monitoring** | `apps/monitor`: call chains and lifecycle events, stats and graphs, plus CLI / live TUI / optional HTTP / in-process queries; leave the package out if you do not need it |
 | **Ecosystem at the edge** | External compatibility via separate Abilities or assembly modules; core Abilities and the engine stay stable |
 
 ---
@@ -129,36 +129,32 @@ Unified governance where it matters, local reuse where it helps. Details: [Archi
 
 ---
 
----
+## Optional monitoring
 
-## Built-in monitoring (removable app)
+LEAF ships optional monitoring as `apps/monitor` (crate `leaf-monitor`). Add the dependency and a `monitor.yml` when you want it; leave them out when you do not.
 
-LEAF ships low-level monitoring as **one removable component**: `apps/monitor` (crate `leaf-monitor`). The product switch is whether that app exists and how `monitor.yml` is configured—there is no second product-level "feature" toggle. (If the engine needs a Cargo `monitor` feature for probes, the monitor app's dependency turns it on automatically.)
+### What you can observe
 
-### What it records
+Events and in-flight snapshots are meant for **call graphs and lifecycle state diagrams**, not only pass/fail logs:
 
-Engine probes emit events and in-flight snapshots that are rich enough to **model call graphs and lifecycle state diagrams** (not just pass/fail logs):
+- **Call chains** — a root call and its nested calls, enough to rebuild a call tree
+- **Timing and order** — start/end times and sequence, so you can measure latency
+- **Lifecycle** — Ability load/unload and state changes
+- **Queue stats** — recent volume, queued depth, and drops (bounded queue; never blocks callers)
 
-- **Call chains** — every root invoke is a chain; nested `ctx.call` shares `chain_id`, bumps span, and keeps parent edges via `span_id` / `parent_span_id` (never invent an edge when parent is absent).
-- **Timing & order** — `started_at` / `ended_at`, process-local `seq`.
-- **Lifecycle & host** — `ability.lifecycle.*`, `host.load|unload`, with `from` / `to` for state transitions; `ability_id` vs instance name.
-- **Drop-aware stats** — `monitor.stats`: `dropped` / `queued` / `recent` (bounded queue, drop-oldest, never blocks callers).
+Rebuild a tree with `leaf_monitor::graph::build_chain_graph`, or use the graph query below.
 
-Rebuild a tree with `leaf_monitor::graph::build_chain_graph(&events)`, or query the ready-made graph surface below.
+### How to query it
 
-### Surfaces (all inside `apps/monitor`)
-
-| Surface | Entry |
+| Interface | Entry |
 |---|---|
-| Async JSONL log | One `MonitorEvent` per line; bounded queue |
-| Query CLI | chains / events / log / **stats** / **graph**; offline `monitor log --tail N` |
-| Realtime TUI | `cargo run -p leaf-monitor -- tui` (DEMO or LIVE); Tab cycles chains → events → **graph** (`g`); scroll / focus / `q` |
-| Optional HTTP | Off by default; local bind (`/monitor/chains`, `/events`, `/log`, `/stats`, `/graph`) |
-| Open fun | `leaf_monitor::fun_call` — `monitor.chains` / `events` / `log` / `stats` / `graph` |
+| Async JSONL log | One event per line |
+| Query CLI | Chains, events, log, **stats**, and **graph**; offline `monitor log --tail N` |
+| Live TUI | `cargo run -p leaf-monitor -- tui`; Tab switches chains → events → **graph** |
+| Optional HTTP | Off by default; local endpoints for the same views |
+| In-process API | Query chains, events, stats, and graph in the same process |
 
-Delete `apps/monitor` (and its dependency from the entry app) and the monitoring surface is gone; the hot path compiles with zero probe cost.
-
-How-to and field contracts: `apps/monitor/README.md` and skill `SKILL/use-monitoring`.
+See `apps/monitor/README.md` and skill `SKILL/use-monitoring` for details.
 
 ## Manual
 

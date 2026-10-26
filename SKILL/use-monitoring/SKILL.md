@@ -1,42 +1,41 @@
 ---
 name: use-monitoring
 description: >-
-  Use Leaf built-in low-level monitoring (apps/monitor): attach, CLI, TUI, HTTP, fun, JSONL,
-  stats/graph, and how to build monitoring-style services on top. Use when integrating monitor,
+  Use Leaf optional low-level monitoring (apps/monitor): attach, CLI, TUI, HTTP, in-process API, JSONL,
+  stats/graph, and how to build monitoring-style services on top. Use when integrating monitoring,
   reading MonitorEvent/ChainStatus, or implementing dashboards/alerts/audit export.
 ---
 
 # 使用底层监测
 
-## 站立约束
+## 使用约定
 
-- 监测的**唯一产品面**是可删的 `apps/monitor`（crate：`leaf-monitor`）。删除该 app（及入口对它的依赖）即关闭运行面。
-- Cargo `monitor` feature 是实现细节：由本 app 的依赖自动启用；**不要**把它当成第二套产品级开关来记。
-- 不要改禁止目录（`/frame`、`/SDK`、`/apps/ability-core`、`apps/plugin-host`）来「开监测」；挂载与查询都走 `apps/monitor`。
-- 主要注意事项也可对照公开 `AGENT.md` 中的框架边界。
-- 整包更新时监测面冲突：先问用户，见 `framework-update`。
+- 可选底层监测由 `apps/monitor`（包名 `leaf-monitor`）提供。依赖并配置即可使用；去掉该包及入口依赖即不再提供监测查询入口。
+- Cargo `monitor` feature 是实现细节：由本包依赖自动启用；**不要**把它当成另一套产品开关。
+- 不要改框架禁止目录（见公开 `AGENT.md`）来「开监测」；接入与查询都走 `apps/monitor`。
+- 整包更新时若与本地监测相关改动冲突：先问用户，见 `framework-update`。
 
 ## 底层监测是什么
 
 `apps/monitor` 提供：
 
-- 进程内挂载（`attach`）与配置（`monitor.yml`）
+- 进程内接入（`attach`）与配置（`monitor.yml`）
 - 异步 JSONL 落盘（有界队列；满时丢最旧）
-- 查询：CLI、实时 TUI、可选 HTTP、开放 `fun`
+- 查询：CLI、实时 TUI、可选 HTTP、进程内 API（`fun_call`）
 - 统计与图：`stats`（含丢弃计数）、`graph`（显式父子边）
 
-内核在 invoke / lifecycle / host 路径埋点；无 Sink 或卸掉监测时，热路径不保留监测成本。
+运行时在调用、生命周期与宿主加载/卸载路径埋点；未接入监测时，调用路径不承担监测开销。
 
 ## 如何使用
 
-### 1. 挂载
+### 1. 接入
 
 ```rust
 use leaf_monitor::{attach, MonitorConfig};
 
 let app = attach(&host, MonitorConfig::load(None));
 // … 使用 host …
-app.shutdown(); // 卸 Sink
+app.shutdown(); // 关闭监测
 ```
 
 配置文件 `monitor.yml`（缺省用 `MonitorConfig::default`）常见项：`log_path`、`queue_capacity`、`recent_capacity`、`http.enabled` / `http.bind`、`tui_refresh_ms`。
@@ -128,7 +127,7 @@ run_tui(&app)?;
 面向集成方/产品方的组合方式（在 `apps/monitor` 之上，而不是改内核）：
 
 1. **订阅 / 消费事件流**
-   - 进程内：挂载后的 Sink / 最近事件缓冲 / `fun_call`
+   - 进程内：接入后的最近事件缓冲 / `fun_call`
    - 文件：尾随 JSONL
    - 网络：开启 HTTP 后由自有服务拉取
    - 用途：自有面板、告警、审计导出、对接外部 APM
@@ -144,12 +143,12 @@ run_tui(&app)?;
 4. **完整性**
    - 任何「全量」统计或告警都先读 `stats.dropped`；`dropped > 0` 时结果只能标为不完整或降级
 
-5. **组合根挂载**
+5. **在入口应用中接入**
    - 入口应用依赖 `leaf-monitor`，在 Host 就绪后 `attach`，进程退出前 `shutdown`
    - 需要 LIVE TUI 时在同一进程 `run_tui`；独立 `monitor tui` 默认 DEMO 泵仅便于观看
 
 6. **Guest / external 边界**
-   - 监测是框架产品面，不是业务 Ability；不要把监测伪装成普通业务能力，也不要在 `external/` 演示里伪造框架内置身份（见 `ability-placement`、`guest-ability`）。
+   - 监测是框架提供的可选能力，不是业务 Ability；不要把监测伪装成普通业务能力，也不要在 `external/` 演示里伪造框架自带身份（见 `ability-placement`、`guest-ability`）。
 
 ## 反模式
 
@@ -161,7 +160,7 @@ run_tui(&app)?;
 
 ## 自检
 
-- [ ] 入口只通过 `apps/monitor` 挂载与查询；删除 app 后运行面关闭
+- [ ] 入口只通过 `apps/monitor` 接入与查询；去掉该包后监测查询入口关闭
 - [ ] 需要图时使用 `span_id`/`parent_span_id` 或 `build_chain_graph`，不猜边
 - [ ] 完整审计前检查 `monitor.stats.dropped`
 - [ ] 未把监测标成业务 builtin；未改四个禁止目录

@@ -1,8 +1,8 @@
 # leaf-monitor（`apps/monitor`）
 
-Leaf 唯一可删的底层监测产品面：全局配置、异步 JSONL、查询 CLI、**实时 TUI**、可选 HTTP、开放 fun。
+Leaf 可选监测：配置、异步 JSONL、查询 CLI、**实时 TUI**、可选 HTTP、进程内查询。
 
-开关就是本 app 是否存在 / 被入口依赖；删除 crate 即关闭运行面。内核探针由本 crate 依赖自动启用 Cargo `monitor` feature。
+需要时依赖本包并配置即可；不需要则不引入本包及入口依赖。
 
 ## 实时 TUI
 
@@ -35,42 +35,42 @@ run_tui(&app)?; // 或 run_tui_opts(&app, TuiOpts { demo: false, .. })
 | 键 | 作用 |
 |----|------|
 | `q` / `Esc` | 退出 |
-| `Tab` | 切换 chains / events 面板焦点 |
+| `Tab` | 在 chains / events / **graph** 间切换焦点（亦可用 `g` 打开图视图） |
 | `↑` `↓` / `j` `k` | 滚动当前面板 |
 | `PgUp` `PgDn` | 翻页 |
 | `Home` `End` | 事件：更旧 / 回到最新；链：顶 / 底 |
 
 ### 能看到什么
 
-- **标题栏**：`LIVE` 或 `DEMO`、刷新间隔、距上次刷新年龄、当前焦点
-- **chains**：`ChainStatus` 字段 — `chain_id`、`instance`、`method`、`span`、`running`（无开始时间字段，不编造 duration）
-- **events**：`MonitorEvent` — 时钟时间、年龄、`kind`（invoke/lifecycle/host）、`phase`（before/after/error/load/unload…）、instance、method、chain_id、span、error
+- **标题栏**：`LIVE` 或 `DEMO`、刷新间隔、距上次刷新年龄、当前焦点、`dropped/queued/recent`
+- **chains**：`ChainStatus` — `chain_id`、`instance`、`method`、`span`、`running`、`started_at`、`span_id` / `parent_span_id`、`ability_id`
+- **events**：`MonitorEvent` — 时间、`seq`、`kind` / `phase`、instance、method、`ability_id`、chain/span 拓扑、`started_at` / `ended_at`、`from` / `to`、error
+- **graph**：按 `span_id`→`parent_span_id` 重建的调用树（无 parent 不臆造边）
 
 ## 其它入口
 
 | 入口 | 说明 |
 |------|------|
 | `monitor log --file monitor.jsonl --tail 64` | 离线 JSONL |
-| `leaf_monitor::cli::run_cli` | 进程内 chains / events / log |
-| HTTP（默认关） | `GET /monitor/chains`，`POST /monitor/events`，`POST /monitor/log` |
-| `fun_call` | `monitor.chains` / `monitor.events` / `monitor.log` |
+| `leaf_monitor::cli::run_cli` | 进程内 chains / events / log / **stats** / **graph** |
+| HTTP（默认关） | `GET /monitor/chains`、`/events`、`/log`、`/stats`、`/graph` |
+| `fun_call` | `monitor.chains` / `events` / `log` / `stats` / `graph` |
 
 配置见 `monitor.yml`（缺省用 `MonitorConfig::default`）：`log_path`、`queue_capacity`、`recent_capacity`、`http.enabled`/`bind`、`tui_refresh_ms`。
 
+## 建模字段（链路 / 状态 / 统计）
 
-## Modeling fields (chain / state / stats)
+事件与链快照携带拓扑与时间字段，客户端可据此建图，无需猜测：
 
-Events and chain snapshots now carry topology and timing fields so clients can build graphs without guessing:
+| 字段 | 位置 | 用途 |
+|------|------|------|
+| `span_id` / `parent_span_id` | MonitorEvent、ChainStatus | 显式调用树边（无 parent ⇒ 不臆造边） |
+| `ability_id` | Event / ChainStatus | 能力 id，与实例名区分 |
+| `started_at` / `ended_at` | Event（invoke） | 段起止 / 可算耗时 |
+| `from` / `to` | lifecycle / host | 状态转移边 |
+| `seq` | Event | 进程内顺序 |
+| `dropped` / `queued` / `recent` | `monitor.stats` | 可感知丢弃的队列统计 |
 
-| Field | Where | Purpose |
-|-------|--------|---------|
-| `span_id` / `parent_span_id` | MonitorEvent, ChainStatus | Explicit call-tree edges (no parent ⇒ no invented edge) |
-| `ability_id` | Event / ChainStatus | Ability id vs instance name |
-| `started_at` / `ended_at` | Event (invoke) | Duration / span lifetime |
-| `from` / `to` | lifecycle / host | State-transition edges |
-| `seq` | Event | Process-local order |
-| `dropped` / `queued` / `recent` | `monitor.stats` | Drop-aware queue stats |
-
-Query: CLI `Stats`/`Graph`, HTTP `GET /monitor/stats` + `GET /monitor/graph`, fun `monitor.stats` / `monitor.graph`.
-Rebuild: `leaf_monitor::graph::build_chain_graph(&events)`.
-TUI: press `g` for graph tree (also `Tab` cycles chains → events → graph). Header shows `dropped/queued/recent`.
+查询：CLI `Stats`/`Graph`，HTTP `GET /monitor/stats` + `GET /monitor/graph`，fun `monitor.stats` / `monitor.graph`。  
+重建：`leaf_monitor::graph::build_chain_graph(&events)`。  
+TUI：`g` 打开图树（Tab 在 chains → events → graph 循环）；标题栏显示 `dropped/queued/recent`。

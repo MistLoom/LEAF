@@ -9,7 +9,7 @@
 | `guest-ability` | Guest（Node / Python / 仓颉） |
 | `expose-governance` | Expose / open / 事件治理 |
 | `framework-update` | 框架更新与同步 |
-| `use-monitoring` | 使用底层监测、借其做监测类服务 |
+| `use-monitoring` | 使用可选底层监测、在其上做监测类服务 |
 | `register-skills` | 把本仓技能挂到全局 Cursor skills（默认不执行） |
 
 ## 框架自带身份（给作者的边界）
@@ -18,4 +18,4 @@
 
 ## 底层监测
 
-唯一可删除产品面是 `apps/monitor`。如何挂载、查询面、链路图/状态图、以及如何借其做监测类服务：见 **`use-monitoring`**。拉取更新时与本地改动冲突：见 `framework-update`（先问用户）。
+可选底层监测在 `apps/monitor`。如何接入、查询、画链路图/状态图，以及如何在其上做监测类服务：见 **`use-monitoring`**。拉取更新时与本地改动冲突：见 `framework-update`（先问用户）。

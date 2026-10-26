@@ -112,6 +112,7 @@ Guest 与进程内 Rust 的差异：Guest 不支持 `register_aspect`（进程�
 | **声明驱动与代码生成**       | `ability.yml` 与协议 `info.yml` 生成 Provider，业务逻辑在 `src/logic/`，减少样板与适配分叉 |
 | **面向 AI 系统的原生积木**   | 会话、多轮工具循环、Skill、OpenAI 兼容 chat 等；Agent 是消费者之一                         |
 | **Rust 运行时**        | Workspace 使用 Rust edition 2024，侧重内存安全、高性能与可部署性                        |
+| **可选监测**             | `apps/monitor`：调用链与生命周期事件、统计与图、CLI / 实时 TUI / 可选 HTTP / 进程内查询；不需要时可不引入该包 |
 | **生态适配在边缘**         | 外部兼容通过独立 Ability 或装配模块接入，核心 Ability 与引擎保持稳定                           |
 
 ---
@@ -127,6 +128,33 @@ Guest 与进程内 Rust 的差异：Guest 不支持 `register_aspect`（进程�
 | **早期共建**        | 愿意参与运行时设计的 Rust / AI 基础设施工程师        |
 
 ---
+
+## 可选监测
+
+LEAF 提供可选的监测能力，位于 `apps/monitor`（包名 `leaf-monitor`）。需要时加上依赖并配置 `monitor.yml`；不需要时不引入即可。
+
+### 能观测什么
+
+事件与进行中的快照用于**梳理调用关系与生命周期状态变化**，而不只是成败日志：
+
+- **调用链** — 一次根调用及其嵌套调用，可还原调用树
+- **时间与顺序** — 起止时间与顺序，便于衡量耗时
+- **生命周期** — Ability 的加载、卸载与状态变化
+- **队列统计** — 近期事件量、排队深度与丢弃情况（有界队列，不拖慢业务调用）
+
+可用 `leaf_monitor::graph::build_chain_graph` 重建调用树，或通过下方入口查询图数据。
+
+### 怎么查看
+
+| 方式 | 说明 |
+|---|---|
+| 异步 JSONL 日志 | 一行一条事件 |
+| 查询 CLI | 查询链、事件、日志、**统计**与**调用图**；支持离线读日志 |
+| 实时 TUI | `cargo run -p leaf-monitor -- tui`；Tab 在链 / 事件 / **图**之间切换 |
+| 可选 HTTP | 默认关闭；本机提供同样视图的接口 |
+| 进程内 API | 在同一进程内查询链、事件、统计与图 |
+
+详情见 `apps/monitor/README.md` 与技能 `SKILL/use-monitoring`。
 
 ## 手册
 

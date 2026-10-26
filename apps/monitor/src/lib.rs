@@ -1,11 +1,10 @@
-//! Leaf 底层监测 app。
+//! Leaf 可选底层监测。
 //!
-//! 唯一可删的监测产品组件：全局配置 + 异步 recorder + 查询 CLI + TUI +
-//! 可选 HTTP + 开放 fun。开关就是本 app 是否存在/被依赖：
-//! 删除本 crate（并移除入口对其依赖）即关闭监测运行面。
+//! 提供全局配置、异步记录、查询 CLI、实时 TUI、可选 HTTP 与进程内查询。
+//! 依赖本包并配置即可使用；去掉本包及入口依赖后不再提供监测查询入口。
 //!
-//! 本 crate 依赖 `ability-core` 并启用其 `monitor` feature，
-//! 由 feature 统一自动把内核探针编进二进制，开发者不必单独记一套 feature。
+//! 本包依赖 `ability-core` 并启用其 `monitor` feature，
+//! 从而把探针编进二进制；该 feature 是实现细节，不必单独当作产品开关。
 
 pub mod cli;
 pub mod graph;
@@ -164,7 +163,7 @@ impl MonitorApp {
         tail_log_file(&self.config.log_path, n)
     }
 
-    /// 关闭监测面：卸下全局 Sink 并停掉落盘 worker。
+    /// 关闭监测：卸下全局回调并停掉落盘 worker。
     pub fn shutdown(&self) {
         ability_support::monitor::clear_monitor_sink();
         self.stop.store(true, Ordering::SeqCst);
@@ -172,7 +171,7 @@ impl MonitorApp {
     }
 }
 
-/// 装配监测 app：登记全局 Sink、启动异步落盘 worker。
+/// 接入监测：登记全局回调、启动异步落盘 worker。
 /// 入口应用（组合根）在拿到 `AbilityHost` 后调用一次。
 pub fn attach(host: &AbilityHost, config: MonitorConfig) -> Arc<MonitorApp> {
     let queue = Arc::new(QueueSink {
