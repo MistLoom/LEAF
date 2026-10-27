@@ -98,6 +98,7 @@ pub enum RuntimeKind {
     Rust,
     Node,
     Python,
+    Cangjie,
 }
 
 /// 能力本体声明（`ability.yml`）。

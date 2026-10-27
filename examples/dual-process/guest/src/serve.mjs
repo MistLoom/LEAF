@@ -1,0 +1,27 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+function sdkAbilityJs(fromDir) {
+  let d = fromDir;
+  for (;;) {
+    const f = path.join(d, "SDK", "ability-sdk-ts", "lib", "ability.js");
+    if (existsSync(f)) return pathToFileURL(f).href;
+    const up = path.dirname(d);
+    if (up === d) throw new Error("找不到 SDK/ability-sdk-ts");
+    d = up;
+  }
+}
+
+const { serveAbility } = await import(
+  sdkAbilityJs(path.dirname(fileURLToPath(import.meta.url)))
+);
+
+// 只读 Guest 进程：假能力，无业务语义
+await serveAbility({
+  read: async () => ({ memo: "sandbox-note-1" }),
+  ping: async (ctx) => {
+    await ctx.emit("read_done", { from: "sandbox" });
+    return { ok: true };
+  },
+});

@@ -1,0 +1,21 @@
+framework_version: "node@1"
+id: notebook
+open: true
+protocols: [fun]
+depends: []
+stateful: false
+methods:
+  - id: read
+    description: 只读假能力：返回一条固定备忘（无业务语义）
+    input:
+      type: object
+  - id: ping
+    description: 探活：发 read 事件并返回 ok
+    input:
+      type: object
+events:
+  - name: read_done
+    dir: emit
+    description: read 完成事件
+    payload_schema:
+      type: object

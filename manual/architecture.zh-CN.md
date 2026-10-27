@@ -31,7 +31,7 @@ Ports (CLI / HTTP / MCP / Fun / …)
 | 能力 | 仓库根 `abilitys/<分类>/<name>` 为共享实现；`apps/<app>/ability/<name>` 为应用自有 |
 | 应用 | 场景进程与装配策略 |
 
-Node / Python 能力通过 **Guest 线协议** 接入，声明模型与 Rust 共用 `ability.yml`。见 [Guest 协议](ability-guest-protocol.zh-CN.md)。
+Node / Python / 仓颉能力通过 **Guest 线协议**（`guest-protocol-1`）接入，声明模型与 Rust 共用 `ability.yml`；SDK 位于仓库根 `SDK/ability-sdk-{ts,py,cj}`。Guest 不支持 `register_aspect`。见 [Guest 协议](ability-guest-protocol.zh-CN.md)。
 
 ## 可见性与治理
 

@@ -1,0 +1,16 @@
+[package]
+name = "example-dual-process"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "双进程参考示例：只读 Guest 子进程 + 宿主侧写子能力（假能力，无业务语义）"
+
+[dependencies]
+ability-core.workspace = true
+ability-support.workspace = true
+frame-core.workspace = true
+frame-compose.workspace = true
+frame-port-http.workspace = true
+async-trait.workspace = true
+serde_json.workspace = true
+tokio.workspace = true

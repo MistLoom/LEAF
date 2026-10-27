@@ -6,6 +6,7 @@ apps/ability-core/data/
 **/__pycache__/
 **/*.pyc
 target
+target-*
 /scripts
 /docs
 Agent_.md

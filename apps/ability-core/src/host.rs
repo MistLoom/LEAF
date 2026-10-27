@@ -73,9 +73,36 @@ pub struct AbilityGrant {
     pub open: bool,
 }
 
+/// 一次 `load` 失败的调用方可见记录（分类码 + 原始信息）。
+#[derive(Clone, Debug)]
+pub struct LoadFailure {
+    pub source: String,
+    pub instance: String,
+    /// 错误分类码（`toolchain_missing` / `artifact_missing` / `handshake_failed` / …）。
+    pub code: &'static str,
+    pub message: String,
+}
+
+/// Guest/实例就绪探针结果。
+///
+/// 契约：**装载成功 ≠ 可 invoke**。只有 [`Readiness::Ready`] 表示实例已通过
+/// 装载（含 Guest 握手与生命周期回调）且处于就绪阶段；调用方（如对外入口的
+/// 注册逻辑）应在暴露依赖该实例的能力前先探测就绪。
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Readiness {
+    /// 实例已装载且生命周期就绪，可 invoke。
+    Ready,
+    /// 未装载或装载已回滚（未 install / load 失败 / 已 unload）。
+    Absent,
+    /// 最近一次装载失败；携带错误分类码与原始信息。
+    Failed { code: &'static str, message: String },
+}
+
 pub(crate) struct HostInner {
     pub sources: StdRwLock<HashMap<SourceId, Arc<dyn AbilityProvider>>>,
     pub instances: StdRwLock<HashMap<InstanceId, InstanceSlot>>,
+    /// 最近一次装载失败记录（按实例去重，成功装载即清除）。
+    pub load_failures: StdMutex<HashMap<String, LoadFailure>>,
     pub events: EventBus,
     /// ability id / instance id → 归属。
     pub grants: StdRwLock<HashMap<String, AbilityGrant>>,
@@ -96,6 +123,7 @@ impl HostInner {
         Self {
             sources: StdRwLock::new(HashMap::new()),
             instances: StdRwLock::new(HashMap::new()),
+            load_failures: StdMutex::new(HashMap::new()),
             events: EventBus::new(),
             grants: StdRwLock::new(HashMap::new()),
             entry_app: StdRwLock::new(None),
@@ -949,11 +977,98 @@ impl AbilityHost {
     }
 
     pub async fn load(&self, spec: LoadSpec) -> Result<InstanceId> {
-        self.inner.load(spec).await
+        let result = self.inner.load(spec.clone()).await;
+        let instance = spec.as_name.to_string();
+        let source = spec.source.to_string();
+        match &result {
+            Ok(_) => {
+                self.inner
+                    .load_failures
+                    .lock()
+                    .expect("load_failures")
+                    .remove(&instance);
+            }
+            Err(e) => {
+                self.inner
+                    .load_failures
+                    .lock()
+                    .expect("load_failures")
+                    .insert(
+                        instance.clone(),
+                        LoadFailure {
+                            source,
+                            instance,
+                            code: e.code(),
+                            message: e.to_string(),
+                        },
+                    );
+            }
+        }
+        result
     }
 
     pub async fn unload(&self, instance: &InstanceId) -> Result<()> {
         self.inner.unload(instance).await
+    }
+
+    /// 就绪探针：装载成功 ≠ 可 invoke。
+    ///
+    /// - `Ready`：实例在册且生命周期处于就绪阶段，可 invoke；
+    /// - `Failed`：最近一次装载失败（含分类码与原始信息，如缺工具链 / 缺预构建产物 / 握手失败）；
+    /// - `Absent`：未装载或装载已回滚。
+    pub fn readiness(&self, instance: &InstanceId) -> Readiness {
+        let slot = self
+            .inner
+            .instances
+            .read()
+            .expect("instances")
+            .get(instance)
+            .map(|s| s.phase);
+        let failure = self
+            .inner
+            .load_failures
+            .lock()
+            .expect("load_failures")
+            .get(instance.as_str())
+            .cloned();
+        match slot {
+            Some(Lifecycle::Ready) => Readiness::Ready,
+            Some(Lifecycle::Failed) => failure
+                .map(|f| Readiness::Failed {
+                    code: f.code,
+                    message: f.message,
+                })
+                .unwrap_or(Readiness::Failed {
+                    code: "failed",
+                    message: "实例生命周期失败".into(),
+                }),
+            _ => failure
+                .map(|f| Readiness::Failed {
+                    code: f.code,
+                    message: f.message,
+                })
+                .unwrap_or(Readiness::Absent),
+        }
+    }
+
+    /// 最近一次装载失败记录（按实例去重）。
+    pub fn load_failures(&self) -> Vec<LoadFailure> {
+        self.inner
+            .load_failures
+            .lock()
+            .expect("load_failures")
+            .values()
+            .cloned()
+            .collect()
+    }
+
+    /// 清空装载失败记录。
+    pub fn clear_load_failures(&self) {
+        self.inner
+            .load_failures
+            .lock()
+            .expect("load_failures")
+            .clear();
     }
 
     pub fn catalog(&self) -> Vec<CatalogEntry> {

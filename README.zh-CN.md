@@ -98,7 +98,18 @@ Ability Guest SDK 各语言实现（位于 `SDK/`，均走 `guest-protocol-1` st
 
 Guest 与进程内 Rust 的差异：Guest 不支持 `register_aspect`（进程内切面仅 Rust 运行时可用）。协议细节见 [Guest 线协议](manual/ability-guest-protocol.zh-CN.md)。
 
-既保证统一治理，也允许局部复用。架构细节见 [架构概览](manual/architecture.zh-CN.md)。
+### 跨进程调用（可选）
+
+Gateway 默认是**单进程**调用管道门面；多进程 / 跨设备的分布式 Gateway 不是默认现成能力。框架提供一个可选的连接型实现：
+
+- `frame/port-http::RemoteHttpGateway`：连接远端 Leaf 进程的 HTTP 端口（其 `/v1/abilities` REST 面），在本地实现 `Gateway` trait——目录连接时预取缓存、invoke 实时转发、错误经分类码还原，不降级为泛化 5xx。用法见该 crate 文档与 `frame/port-http/tests/remote_gateway.rs`。
+- 应用自建通道的原则：任何远端通道都应落回统一 `Gateway` trait（实现 `invoke` / `catalog` / `get_entry`），让端口、观测与鉴权继续走同一管道；传输与编解码可自选（HTTP、gRPC 端口已具备对应投影，可作为通道两端）。
+
+### HTTP 边界
+
+`frame/port-http` 只承载**通用 REST 面**：`/health`、目录与 `invoke`（统一 Gateway 信封）。复杂领域 REST 属于应用层：`HttpPort::with_route_extension` 允许在默认 REST 面之上合并应用自有路由——能力调用仍走统一 Gateway 面（获得同一套观测、鉴权与错误分类），领域接口由应用自己定义与守护。两种叙事不混用：不要把厚领域逻辑塞进默认投影，也不要绕开 Gateway 直连能力。
+
+ 既保证统一治理，也允许局部复用。架构细节见 [架构概览](manual/architecture.zh-CN.md)。
 
 ---
 

@@ -98,7 +98,18 @@ Ability Guest SDK implementations (under `SDK/`, all speaking `guest-protocol-1`
 
 Guest vs in-process Rust: Guests do not support `register_aspect` (in-process aspects are Rust-runtime only). Protocol details: [Guest wire protocol](manual/ability-guest-protocol.zh-CN.md).
 
-Unified governance where it matters, local reuse where it helps. Details: [Architecture](manual/architecture.md).
+### Cross-process invocation (optional)
+
+The Gateway is by default a **single-process** invocation facade; a distributed multi-process / cross-device Gateway is not a turnkey capability. The framework ships one optional connect-style implementation:
+
+- `frame/port-http::RemoteHttpGateway`: connects to another Leaf process's HTTP port (its `/v1/abilities` REST surface) and implements the local `Gateway` trait — catalog prefetched at connect time, invoke forwarded live, errors restored via classification codes instead of degrading to a generic 5xx. See the crate docs and `frame/port-http/tests/remote_gateway.rs`.
+- Principle for app-built channels: any remote channel should land back on the unified `Gateway` trait (`invoke` / `catalog` / `get_entry`), so ports, observability, and access control keep flowing through the same pipeline; transport and encoding are up to you (the HTTP and gRPC ports already provide the matching projections on both ends).
+
+### HTTP boundary
+
+`frame/port-http` carries only the **generic REST surface**: `/health`, catalog, and `invoke` (the unified Gateway envelope). Complex domain REST belongs to the application: `HttpPort::with_route_extension` lets an app merge its own routes on top of the default surface — ability calls keep flowing through the unified Gateway face (same observability, access control, and error classification), while domain endpoints are defined and guarded by the app. The two narratives are not mixed: don't push thick domain logic into the default projection, and don't bypass the Gateway to reach abilities.
+
+ Unified governance where it matters, local reuse where it helps. Details: [Architecture](manual/architecture.md).
 
 ---
 

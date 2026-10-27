@@ -40,6 +40,7 @@ members = [
     "apps/monitor",
     "apps/agent-test",
     "apps/web-agent",
+    "examples/dual-process",
 ]
 default-members = ["apps/web-agent"]
 

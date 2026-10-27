@@ -73,7 +73,7 @@ fn main() {
                     e.id, mod_name, e.id
                 ));
             }
-            RuntimeKind::Node | RuntimeKind::Python => {
+            RuntimeKind::Node | RuntimeKind::Python | RuntimeKind::Cangjie => {
                 code.push_str(&format!(
                     "    if let Err(err) = host.install_str(\"{}\", GuestSourceProvider::from_workspace_rel(&workspace_root(), \"{}\").into_provider()).await {{\n        tracing::warn!(id = \"{}\", error = %err, \"install guest ability 失败\");\n    }}\n",
                     e.id, e.rel, e.id
@@ -149,7 +149,9 @@ fn scan_ability_dir(ability_dir: &Path, rel_parent: &str, entries: &mut Vec<Scan
                     parse_package_name(&toml_path).unwrap_or_else(|| folder.replace('_', "-"));
                 (feature_name(&pkg), Some(pkg))
             }
-            RuntimeKind::Node | RuntimeKind::Python => (folder.replace('_', "-"), None),
+            RuntimeKind::Node | RuntimeKind::Python | RuntimeKind::Cangjie => {
+                (folder.replace('_', "-"), None)
+            }
         };
         entries.push(ScanEntry {
             id,
