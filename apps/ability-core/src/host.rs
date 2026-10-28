@@ -1129,6 +1129,17 @@ impl AbilityHost {
         self.inner.authorize_event(caller, filter, mode)
     }
 
+    /// 读取某能力实例登记的协议集合（只读列举，供一致性校验）。
+    pub fn protocol_support(&self, instance: &str) -> Vec<AccessKind> {
+        self.inner
+            .protocol_support
+            .read()
+            .expect("protocol_support")
+            .get(instance)
+            .cloned()
+            .unwrap_or_default()
+    }
+
     pub fn set_protocol_support(&self, instance: &str, kinds: Vec<AccessKind>) {
         self.inner
             .protocol_support
