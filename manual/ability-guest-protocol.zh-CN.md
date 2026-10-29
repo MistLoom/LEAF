@@ -15,6 +15,17 @@
 
 UTF-8 JSON，一行一帧，以 `\n` 结束。空行忽略。
 
+### 传输卫生（MUST）
+
+各语言 Guest SDK **必须**满足下列卫生要求，否则 Host 侧可能握手超时或误判 Guest 崩溃：
+
+| 要求 | 说明 |
+|------|------|
+| **写后 flush** | 每向 stdout 写出一帧（含结尾换行）后，**必须**立即 flush。重定向管道下 stdout 常为全缓冲；不 flush 则 Host 读端拿不到数据。 |
+| **stdin EOF 干净退出** | stdin 关闭 / 读到 EOF 时，Guest **必须**干净退出主循环（正常 return / exit 0），**禁止**未捕获异常崩进程。 |
+
+实现对照见仓库根 README 的 Guest SDK 对等矩阵「传输 flush / stdin EOF」行。
+
 ## 握手
 
 1. 宿主 → `{"id":"…","body":{"type":"hello"}}`
@@ -83,8 +94,28 @@ Guest 内耗时超过一次 invoke 合理时长的任务，走**协议级 handle
    - `{"state": "not_found"}`：handle 未知或已释放（含重复取结果）。
 3. **语义约束**：handle 仅在 Guest 进程内有效（unload/shutdown 即失效）；轮询频率由调用方决定，框架不做推送。
 
-当前实现：Node SDK（`SDK/ability-sdk-ts` 的 `pending` / `withLongTask`，`serveAbility` 自动生效）。Python / 仓颉 SDK 待跟进，届时契约不变。参考测试：`apps/ability-core/tests/proc_guest_subprocess.rs::subprocess_probe_ts_long_task_handle_poll`（覆盖受理、running、done、failed、handle 释放）。
+长任务是**协议级**能力（不新增帧类型），与语言无关；各语言 SDK 落地状态见 README Guest SDK 对等矩阵「长任务 handle/轮询」行。
+
+| 语言 | 状态 | 入口 |
+|------|------|------|
+| Node | ✅ | `pending` / `withLongTask`；`serveAbility` 自动包装 |
+| Python | 见矩阵 | `pending` / `with_long_task`；`serve_ability` 自动包装 |
+| 仓颉 | 见矩阵 | `pending` / `withLongTask`；`serveAbility` 自动包装 |
+| Rust Guest（线协议库） | 不强制 | 进程内/双工可自管；不强制薄助手 |
+
+**未在矩阵标为完整落地的语言，不得宣称支持长任务**；Ability 作者应查矩阵后再用 `pending`。参考测试：`apps/ability-core/tests/proc_guest_subprocess.rs::subprocess_probe_ts_long_task_handle_poll`（覆盖受理、running、done、failed、handle 释放）。
 
 ## 可选仅用预构建
 
 宿主侧 `GuestSourceProvider::prebuilt_only(true)` 启用「不现场编译、只认预构建产物」的装载路径。当前作用于仓颉 Guest：产物约定为能力包内 `target/release/<cjpm 包名>[.exe]`；缺产物归 `artifact_missing` 错误类，不静默降级。默认（关闭）时缺产物会先调用构建器现场构建，构建器不可用归 `toolchain_missing`。
+
+## 多语言对等与新增能力门禁
+
+新增 Guest 协议能力或 SDK 表面时：
+
+1. 先更新本协议（MUST / 能力矩阵）与仓库根 README 的 Guest SDK 对等矩阵；
+2. 四语（Rust 线协议库 / Node / Python / 仓颉）**同列落地**，或在矩阵中显式标缺口，**不得**宣称已完成；
+3. 补探针 / 回归（含管道握手、stdin EOF、写后 flush）；
+4. **禁止**只在产品仓（如 ModalPrism）改 SDK 热修而不上提 Leaf。
+
+跨语言实现应保持与 `SDK/README.md` 所述参考布局一致（传输 / serve / ctx 分层），便于第五种语言对照移植。

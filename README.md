@@ -96,6 +96,19 @@ Ability Guest SDK implementations (under `SDK/`, all speaking `guest-protocol-1`
 | Python | `SDK/ability-sdk-py` | `python@1` (`py@1` alias) | `pyproject.toml` | `src/serve.py` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (rejected as Guest) |
 | Cangjie | `SDK/ability-sdk-cj` | `cangjie@1` (`cj@1` alias) | `cjpm.toml` | `src/serve.cj` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ (rejected as Guest) |
 
+
+#### Guest SDK features: frame output / long tasks / working directory
+
+| Feature | Rust (wire lib) | Node | Python | Cangjie |
+|-------|-----------------|------|--------|---------|
+| stdout flush after each frame | ✅ | ✅ | ✅ | ✅ |
+| clean exit on stdin EOF | ✅ | ✅ | ✅ | ✅ |
+| long-task handle / poll | — (not required) | ✅ | ✅ | ✅ (pending + poll; work runs on a background thread) |
+| `LEAF_ABILITY_ROOT` | — | ✅ | ✅ | ✅ (env first, then cwd walk-up) |
+
+Legend: ✅ supported; ⚠️ partial; ❌ gap; — not applicable. See [Guest wire protocol](manual/ability-guest-protocol.zh-CN.md).
+
+
 Guest vs in-process Rust: Guests do not support `register_aspect` (in-process aspects are Rust-runtime only). Protocol details: [Guest wire protocol](manual/ability-guest-protocol.zh-CN.md).
 
 ### Cross-process invocation (optional)

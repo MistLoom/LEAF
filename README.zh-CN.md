@@ -96,6 +96,19 @@ Ability Guest SDK 各语言实现（位于 `SDK/`，均走 `guest-protocol-1` st
 | Python | `SDK/ability-sdk-py` | `python@1`（`py@1` 同义） | `pyproject.toml` | `src/serve.py` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌（Guest 拒绝） |
 | 仓颉 | `SDK/ability-sdk-cj` | `cangjie@1`（`cj@1` 同义） | `cjpm.toml` | `src/serve.cj` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌（Guest 拒绝） |
 
+
+#### Guest SDK 能力：帧输出 / 长任务 / 工作目录
+
+| 能力 | Rust（线协议库） | Node | Python | 仓颉 |
+|--------|------------------|------|--------|------|
+| 每帧输出后 flush | ✅ | ✅ | ✅ | ✅ |
+| stdin EOF 时干净退出 | ✅ | ✅ | ✅ | ✅ |
+| 长任务 handle / 轮询 | —（不要求） | ✅ | ✅ | ✅（pending+轮询；工作在后台线程执行） |
+| `LEAF_ABILITY_ROOT` | — | ✅ | ✅ | ✅（环境变量优先，其次 cwd 上溯） |
+
+图例：✅ 支持；⚠️ 部分支持；❌ 暂缺；— 不适用。细节见 [Guest 线协议](manual/ability-guest-protocol.zh-CN.md)。
+
+
 Guest 与进程内 Rust 的差异：Guest 不支持 `register_aspect`（进程内切面仅 Rust 运行时可用）。协议细节见 [Guest 线协议](manual/ability-guest-protocol.zh-CN.md)。
 
 ### 跨进程调用（可选）
