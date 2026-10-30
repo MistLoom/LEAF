@@ -10,9 +10,21 @@ methods:
     description: Write contents to a file.
     input:
       type: object
+      description: Provide contents or bytes_base64. If both are provided, bytes_base64 takes precedence.
       properties:
         path:
           type: string
         contents:
           type: string
-      required: [path, contents]
+          description: UTF-8 text to write. Required unless bytes_base64 is provided.
+        bytes_base64:
+          type: string
+          description: Standard Base64-encoded bytes to write. Takes precedence over contents when both are provided.
+        overwrite:
+          type: boolean
+          default: true
+          description: Whether to overwrite an existing file. Defaults to true.
+      required: [path]
+      anyOf:
+        - required: [contents]
+        - required: [bytes_base64]
