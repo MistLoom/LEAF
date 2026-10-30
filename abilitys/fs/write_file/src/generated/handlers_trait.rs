@@ -4,7 +4,12 @@ use async_trait::async_trait;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct RunArgs {
+#[serde(default)]
+    pub bytes_base64: String,
+#[serde(default)]
     pub contents: String,
+#[serde(default)]
+    pub overwrite: bool,
     pub path: String,
 }
 
