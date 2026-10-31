@@ -43,7 +43,7 @@ fn spawn_user_sse(host: &AbilityHost, tx: broadcast::Sender<String>) {
 
 fn spawn_host_pipeline(host: AbilityHost, tx: broadcast::Sender<String>) {
     tokio::spawn(async move {
-        let mut listener = host
+        let listener = host
             .events()
             .listen(EventFilter {
                 class: Some(EventClass::Host),
@@ -51,34 +51,35 @@ fn spawn_host_pipeline(host: AbilityHost, tx: broadcast::Sender<String>) {
             })
             .await;
 
-        while let Some(ev) = listener.next().await {
-            let name = ev.name();
-            let interesting = name == host_event::LOAD
-                || name == host_event::UNLOAD
-                || name.starts_with(host_event::LIFECYCLE_PREFIX)
-                || name == host_event::INVOKE_BEFORE
-                || name == host_event::INVOKE_AFTER
-                || name == host_event::INVOKE_ERROR;
-            if !interesting {
-                continue;
-            }
-            let line = json!({
-                "channel": "host",
-                "name": name,
-                "detail": ev.payload().clone(),
-            });
-            if tx.send(line.to_string()).is_err() {
-                break;
-            }
-        }
+        forward_host_events(listener, tx).await;
     });
+}
+
+async fn forward_host_events(mut listener: impl EventListener, tx: broadcast::Sender<String>) {
+    while let Some(ev) = listener.next().await {
+        let name = ev.name();
+        let interesting = name == host_event::LOAD
+            || name == host_event::UNLOAD
+            || name.starts_with(host_event::LIFECYCLE_PREFIX)
+            || name == host_event::INVOKE_BEFORE
+            || name == host_event::INVOKE_AFTER
+            || name == host_event::INVOKE_ERROR;
+        if !interesting {
+            continue;
+        }
+        let line = json!({
+            "channel": "host",
+            "name": name,
+            "detail": ev.payload().clone(),
+        });
+        // 暂无 SSE 客户端是正常状态，后续客户端仍可订阅。
+        let _ = tx.send(line.to_string());
+    }
 }
 
 fn spawn_ability_pipeline(control: AppControl, host: AbilityHost, tx: broadcast::Sender<String>) {
     tokio::spawn(async move {
-        let turn = InstanceId::new("turn").ok();
-        let session = InstanceId::new("session").ok();
-        let Ok(mut listener) = control
+        let Ok(listener) = control
             .listen(EventFilter {
                 class: Some(EventClass::Ability),
                 ..Default::default()
@@ -88,31 +89,43 @@ fn spawn_ability_pipeline(control: AppControl, host: AbilityHost, tx: broadcast:
             return;
         };
 
-        while let Some(ev) = listener.next().await {
-            let BusEvent::Ability(ab) = ev else {
-                continue;
-            };
-            let inst = ab.instance.to_string();
-            let interesting = match (&turn, &session, inst.as_str()) {
-                (Some(t), Some(s), id) => id == t.as_str() || id == s.as_str(),
-                _ => true,
-            };
-            if !interesting {
-                continue;
-            }
-            let debug_line = json!({
-                "channel": "ability",
-                "instance": inst,
-                "name": ab.name,
-                "detail": ab.payload,
-            });
-            if tx.send(debug_line.to_string()).is_err() {
-                break;
-            }
-            translate_ability_event(&host, &ab).await;
-        }
+        forward_ability_events(listener, host, tx).await;
     });
 }
+
+async fn forward_ability_events(
+    mut listener: impl EventListener,
+    host: AbilityHost,
+    tx: broadcast::Sender<String>,
+) {
+    let turn = InstanceId::new("turn").ok();
+    let session = InstanceId::new("session").ok();
+    while let Some(ev) = listener.next().await {
+        let BusEvent::Ability(ab) = ev else {
+            continue;
+        };
+        let inst = ab.instance.to_string();
+        let interesting = match (&turn, &session, inst.as_str()) {
+            (Some(t), Some(s), id) => id == t.as_str() || id == s.as_str(),
+            _ => true,
+        };
+        if !interesting {
+            continue;
+        }
+        let debug_line = json!({
+            "channel": "ability",
+            "instance": inst,
+            "name": ab.name,
+            "detail": ab.payload,
+        });
+        // 即使没有 SSE 客户端，也继续翻译事件并监听后续消息。
+        let _ = tx.send(debug_line.to_string());
+        translate_ability_event(&host, &ab).await;
+    }
+}
+
+#[cfg(test)]
+mod tests;
 
 async fn translate_ability_event(host: &AbilityHost, ev: &AbilityEvent) {
     match (ev.instance.as_str(), ev.name.as_str()) {
